@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amino Acid Trainer — MCAT amino acid drills</title>
+<meta name="description" content="A free study game for the twenty standard amino acids. Structures, one- and three-letter codes, side-chain classes, charge at any pH, and pI. Runs in your browser, nothing to install.">
+<meta name="author" content="Dathan">
+
+<!-- The palette commits to light. Without this, a dark-mode OS renders
+     the range slider and focus rings dark against a light page. -->
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f4f9fd">
+
+<!-- Link preview for Reddit, Discord, iMessage. og:url is intentionally
+     omitted so scrapers fall back to whatever URL they fetched. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Amino Acid Trainer">
+<meta property="og:title" content="Amino Acid Trainer — MCAT amino acid drills">
+<meta property="og:description" content="Free browser study game for the twenty amino acids: structures, abbreviations, charge at any pH, and pI. No install, no account, works offline.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Amino Acid Trainer — MCAT amino acid drills">
+<meta name="twitter:description" content="Free browser study game for the twenty amino acids: structures, abbreviations, charge at any pH, and pI.">
+
+<style>
+/* ------------------------------------------------------------------
+   styles.css
+   ------------------------------------------------------------------ */
+
+:root {
+  /* The light-blue accent, plus tints and a deepened version of the same
+     203° hue. #90D5FF is only ~1.6:1 on white, so it carries fills, tints
+     and glows while --sky-deep does the work that has to stay readable. */
+  --sky:       #90D5FF;
+  --sky-soft:  #ddf0ff;
+  --sky-tint:  #eef8ff;
+  --sky-deep:  #0a6ba6;   /* 4.9:1 on --sky-soft, so tag/glyph text stays legible */
+  --sky-ink:   #08517e;   /* darkest of the ramp, 8.4:1 on white — wordmark */
+
+  --bg:        #f4f9fd;
+  --bg-2:      #ffffff;
+  --panel:     #ffffff;
+  --panel-2:   #f1f8fd;
+  --line:      #d9e8f4;
+  --ink:       #0f1f2c;
+  --ink-dim:   #5a7286;
+  --ink-faint: #90d5ff88;
+
+  /* Backbone and side chain are separated by hue and saturation rather than
+     lightness; both clear 3:1 against the panel independently. */
+  --backbone:  #7a8fa3;   /* 3.3:1 on white */
+  --rgroup:    #0b7ab8;   /* 4.7:1 on white — the side chain must read clearly */
+  --accent:    var(--sky-deep);
+  --accent-ink:#ffffff;
+
+  --good:      #17864a;
+  --bad:       #c8352b;
+
+  --radius:    14px;
+  --maxw:      1080px;
+}
+
+* { box-sizing: border-box; }
+
+/* One consistent keyboard focus ring for every control. Mouse clicks do
+   not trigger :focus-visible, so this only appears for keyboard users. */
+:focus-visible { outline: 2px solid var(--sky-deep); outline-offset: 3px; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image:
+    radial-gradient(920px 520px at 10% -10%, color-mix(in srgb, var(--sky) 62%, transparent), transparent 66%),
+    radial-gradient(720px 440px at 97% 2%, color-mix(in srgb, var(--sky) 34%, transparent), transparent 62%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 22px 20px 72px; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 20px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 650; letter-spacing: -0.01em; font-size: 1.02rem;
+  color: var(--sky-ink);
+}
+.logo svg { width: 26px; height: 26px; }
+.topbar .spacer { flex: 1; }
+
+/* Quiet, but a real call to action: it has to be readable and look
+   clickable, so no uppercase transform (it would mangle the handle)
+   and no pale --sky (1.6:1 is a watermark, not a link). */
+.sitefoot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--sky-soft);
+  text-align: center;
+}
+.sitefoot .coffee {
+  font-size: 0.9rem;
+  font-weight: 620;
+  color: var(--sky-deep);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--sky-deep) 40%, transparent);
+  padding-bottom: 1px;
+  transition: color .12s, border-color .12s;
+}
+.sitefoot .coffee:hover {
+  color: var(--sky-ink);
+  border-bottom-color: var(--sky-ink);
+}
+.sitefoot .coffee:focus-visible {
+  outline: 2px solid var(--sky-deep);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.sitefoot .venmo {
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+.sitefoot .venmo b {
+  color: var(--sky-deep);
+  font-weight: 620;
+}
+/* display:flex above would beat the UA [hidden] rule, so state it here.
+   The footer is shown on the menu only. */
+.sitefoot[hidden] { display: none; }
+
+.dim { color: var(--ink-dim); font-weight: 450; }
+
+.noscript {
+  background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid var(--sky); border-radius: var(--radius);
+  padding: 16px 18px; margin: 0 0 22px; color: var(--ink-dim);
+}
+
+/* ------------------------------------------------------------ molecule */
+
+svg.mol {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+svg.mol line {
+  stroke-width: 0.075;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.9px;
+}
+svg.mol line.bb { stroke: var(--backbone); }
+svg.mol line.sc { stroke: var(--rgroup); }
+
+svg.mol text {
+  font-size: 0.46px;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-weight: 600;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 0.16px;
+  stroke-linejoin: round;
+}
+svg.mol text.bb { fill: var(--backbone); }
+svg.mol text.sc { fill: var(--rgroup); }
+
+/* labels sit on panels, so the halo has to match the panel colour */
+.card svg.mol text, .aacard svg.mol text,
+.opt-svg svg.mol text, .ms-mol svg.mol text { stroke: var(--panel); }
+.stage svg.mol text { stroke: var(--panel-2); }
+
+/* ---------------------------------------------------------------- hero */
+
+.hero { padding: 10px 0 26px; max-width: 640px; }
+.hero h1 {
+  font-size: clamp(1.7rem, 4.2vw, 2.5rem);
+  line-height: 1.15; letter-spacing: -0.025em; margin: 0 0 12px;
+  font-weight: 680;
+}
+.hero .sub { color: var(--ink-dim); margin: 0; font-size: 1.02rem; }
+.sc-word { color: var(--rgroup); font-weight: 600; }
+
+/* ------------------------------------------------------- progress band */
+
+.progress-band {
+  position: relative;   /* anchor for the chip card */
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px 18px 12px; margin-bottom: 26px;
+}
+.pb-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.pb-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line);
+}
+.pb-num { display: flex; flex-direction: column; line-height: 1.15; }
+.pb-num strong { font-size: 1.25rem; font-weight: 680; letter-spacing: -0.02em; }
+.pb-num span { font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.07em; }
+.pb-grid { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; min-width: 240px; }
+.chip {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 7px; font-size: 0.76rem; font-weight: 650;
+  font-family: inherit; padding: 0; cursor: pointer;
+  color: hsl(var(--hue) 55% 26%);
+  background: hsl(var(--hue) 55% 55% / calc(0.10 + var(--m) * 0.72));
+  border: 1px solid hsl(var(--hue) 50% 55% / 0.35);
+  transition: transform .12s, opacity .12s;
+}
+.chip:hover { transform: translateY(-2px); }
+
+/* Skipped: drained of colour and struck through, so a glance at the row
+   tells you what is in play without reading any labels. */
+.chip.off {
+  filter: grayscale(1);
+  opacity: 0.4;
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+/* ------------------------------------------------- mastery chip card */
+
+.chip-pop {
+  position: absolute; z-index: 40;
+  width: 250px; padding: 13px 14px 12px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 16px 34px -14px rgb(10 45 70 / 0.45);
+  pointer-events: none;   /* never blocks the chip underneath */
+}
+.chip-pop[hidden] { display: none; }
+
+.cp-head { display: flex; align-items: center; gap: 10px; }
+.cp-id { min-width: 0; }
+.cp-name {
+  font-weight: 650; letter-spacing: -0.01em; font-size: 0.95rem;
+  line-height: 1.2;
+}
+.cp-cls { font-size: 0.72rem; color: hsl(var(--hue) 60% 32%); font-weight: 550; }
+.cp-mol { height: 116px; margin: 10px 0 4px; }
+.cp-mol svg.mol text { stroke: var(--panel); }
+
+.cp-bar {
+  height: 5px; border-radius: 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--ink-dim) 20%, transparent);
+}
+.cp-bar span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--sky), var(--sky-deep));
+}
+.cp-stats {
+  display: flex; justify-content: space-between; gap: 10px;
+  margin-top: 6px; font-size: 0.75rem; color: var(--ink-dim);
+}
+.cp-stats b { color: var(--ink); font-weight: 650; }
+.cp-act {
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line);
+  font-size: 0.74rem; font-weight: 600; color: var(--sky-deep);
+}
+.cp-act.is-off { color: var(--ink-dim); }
+.cp-act.is-warn { color: var(--bad); }
+
+.pb-hint { font-size: 0.76rem; color: var(--ink-dim); }
+.pb-hint b { color: var(--ink); font-weight: 650; }
+.pb-hint .link { font-size: 0.76rem; }
+
+/* ----------------------------- yield slider (on the Gauntlet card) */
+
+.ym-label {
+  font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 650; color: var(--ink-dim);
+}
+.gy input[type="range"] {
+  width: 92px; height: 18px; margin: 0; cursor: pointer;
+  accent-color: var(--sky-deep);
+}
+.gy input[type="range"]:focus-visible {
+  outline: 2px solid var(--sky-deep); outline-offset: 3px; border-radius: 5px;
+}
+/* fixed width so the row does not shift as the label changes length */
+.ym-now {
+  font-size: 0.82rem; font-weight: 620; color: var(--sky-deep);
+  min-width: 82px;
+}
+
+/* Hover card: all three levels at once, so the control explains its own
+   range rather than only its current position. Opens downward, below
+   the slider, so it never covers the mode cards above it. */
+.ym-pop {
+  position: absolute; top: calc(100% + 9px); left: 0; z-index: 30;
+  width: min(360px, 76vw);
+  display: flex; flex-direction: column; gap: 9px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 11px; padding: 12px 14px;
+  box-shadow: 0 14px 30px -14px rgb(10 45 70 / 0.4);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease, visibility .14s;
+  pointer-events: none;   /* informational only; never blocks a click */
+}
+.gy:hover .ym-pop,
+.gy:focus-within .ym-pop {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.ymp-row {
+  display: block; font-size: 0.78rem; line-height: 1.45;
+  color: var(--ink-dim); padding-left: 10px;
+  border-left: 2px solid transparent;
+}
+.ymp-row b {
+  display: block; font-size: 0.8rem; font-weight: 650;
+  color: var(--ink); margin-bottom: 1px;
+}
+.ymp-row.on { border-left-color: var(--sky); }
+.ymp-row.on b { color: var(--sky-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ym-pop { transition: none; }
+}
+
+/* Reset is destructive and secondary — it should not be the loudest
+   text in this row. */
+.pb-foot .link { font-size: 0.76rem; }
+
+/* --------------------------------------------------------------- modes */
+
+.modes {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+}
+.mode-card {
+  text-align: left; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px;
+  display: grid; gap: 4px; color: inherit; font: inherit;
+  transition: border-color .15s, transform .15s, background .15s;
+}
+.mode-card:hover {
+  border-color: var(--sky);
+  transform: translateY(-2px);
+  background: var(--sky-tint);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--sky-deep) 45%, transparent);
+}
+.mode-card .glyph {
+  font-size: 1.1rem; width: 36px; height: 36px; display: grid;
+  place-items: center; border-radius: 10px; margin-bottom: 8px;
+  background: var(--sky-soft);
+  color: var(--sky-deep); font-weight: 650;
+}
+.mc-name { font-weight: 620; letter-spacing: -0.01em; }
+
+/* The Gauntlet card carries the yield slider, so it is a container
+   rather than one big button: .mc-go is the part that starts a round,
+   .gy is the setting strip underneath. */
+.mode-card.has-yield { padding: 0; display: flex; flex-direction: column; }
+.mode-card.has-yield:hover {
+  transform: none; box-shadow: none;
+  background: var(--panel); border-color: var(--line);
+}
+/* only lift when the pointer is over the start button, not the slider */
+.mode-card.has-yield:has(.mc-go:hover) {
+  transform: translateY(-2px);
+  border-color: var(--sky);
+  background: var(--sky-tint);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--sky-deep) 45%, transparent);
+}
+.mc-go {
+  flex: 1; text-align: left; cursor: pointer;
+  background: none; border: none; color: inherit; font: inherit;
+  padding: 18px; display: grid; gap: 4px; border-radius: var(--radius);
+}
+.mc-go .glyph { margin-bottom: 8px; }
+
+.gy {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  position: relative;
+  padding: 10px 18px 12px;
+  border-top: 1px solid var(--line);
+}
+.mc-desc { color: var(--ink-dim); font-size: 0.875rem; line-height: 1.45; }
+.mode-card.study .glyph {
+  background: color-mix(in srgb, var(--ink-dim) 18%, transparent);
+  color: var(--ink-dim);
+}
+
+.footnote { color: var(--ink-dim); font-size: 0.85rem; margin: 18px 0 0; }
+
+/* --------------------------------------------------------------- quiz */
+
+.quizbar {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.qb-mid { display: flex; align-items: center; gap: 10px; flex: 1; }
+.qb-right { display: flex; align-items: center; gap: 10px; }
+
+.tag {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 650; color: var(--sky-deep);
+  background: var(--sky-soft);
+  padding: 4px 9px; border-radius: 999px;
+}
+.score {
+  font-variant-numeric: tabular-nums; font-weight: 680; font-size: 1.05rem;
+}
+.streak { font-size: 0.85rem; }
+.clock {
+  font-variant-numeric: tabular-nums; font-weight: 650;
+  background: var(--panel); border: 1px solid var(--line);
+  padding: 3px 10px; border-radius: 999px; font-size: 0.9rem;
+}
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 24px;
+}
+.prompt {
+  font-size: 1.14rem; margin: 0 0 18px; letter-spacing: -0.012em;
+  line-height: 1.4;
+}
+.prompt b { font-weight: 660; }
+
+.stage {
+  background: linear-gradient(160deg, var(--sky-tint), var(--panel-2));
+  border: 1px solid var(--line);
+  border-radius: 12px; height: 300px; padding: 18px;
+  margin-bottom: 20px;
+}
+
+/* --------------------------------------------------------- answers */
+
+.opts { display: grid; gap: 9px; grid-template-columns: 1fr 1fr; }
+.opts.one { grid-template-columns: 1fr; }
+@media (max-width: 640px) { .opts { grid-template-columns: 1fr; } }
+
+.opt {
+  display: flex; align-items: center; gap: 11px; text-align: left;
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: inherit; font: inherit; padding: 13px 15px;
+  border-radius: 11px; cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.opt:hover:not(:disabled) {
+  border-color: var(--sky);
+  background: var(--sky-tint);
+}
+.opt:disabled, .opt-svg:disabled { cursor: default; }
+.opt .num, .opt-svg .num {
+  flex: none; width: 22px; height: 22px; border-radius: 6px;
+  display: grid; place-items: center; font-size: 0.72rem;
+  font-weight: 650; color: var(--ink-dim);
+  background: color-mix(in srgb, var(--ink-dim) 16%, transparent);
+}
+.opt-body { flex: 1; }
+
+.grid-svg { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+.opt-svg {
+  position: relative; background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 11px;
+  padding: 14px; height: 210px; cursor: pointer;
+  transition: border-color .12s;
+}
+.opt-svg:hover:not(:disabled) {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sky) 35%, transparent);
+}
+.opt-svg .num { position: absolute; top: 9px; left: 9px; }
+.opt-svg svg.mol text { stroke: var(--panel-2); }
+
+.opt.good, .opt-svg.good {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 13%, var(--panel-2));
+}
+.opt.bad, .opt-svg.bad {
+  border-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 13%, var(--panel-2));
+}
+.opt.good .num { background: var(--good); color: #fff; }
+.opt.bad .num  { background: var(--bad);  color: #fff; }
+
+.swatch {
+  display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  margin-right: 9px; background: hsl(var(--hue) 62% 55%);
+  vertical-align: baseline;
+}
+
+/* typed answers */
+.typebox { display: flex; gap: 10px; align-items: center; }
+.typebox input {
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: inherit; border-radius: 11px; padding: 14px 16px;
+  font: inherit; font-weight: 620; outline: none;
+  transition: border-color .12s;
+}
+.typebox input:focus {
+  border-color: var(--sky-deep);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sky) 45%, transparent);
+}
+.typebox input.narrow {
+  width: 108px; text-align: center; font-size: 1.5rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.typebox input.wide { flex: 1; font-size: 1.05rem; }
+.typebox input.good { border-color: var(--good); color: var(--good); }
+.typebox input.bad  { border-color: var(--bad);  color: var(--bad); }
+
+/* -------------------------------------------------------- feedback */
+
+.verdict {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 20px 0 12px; font-weight: 650; letter-spacing: -0.01em;
+}
+.verdict.ok  { color: var(--good); }
+.verdict.no  { color: var(--bad); }
+.verdict em  { font-style: normal; font-weight: 450; color: var(--ink-dim); }
+
+.explain {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid hsl(var(--hue) 62% 55%);
+  border-radius: 11px; padding: 16px 18px;
+}
+.ex-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ex-name { font-weight: 660; letter-spacing: -0.01em; }
+.ex-cls { font-size: 0.82rem; color: hsl(var(--hue) 60% 32%); font-weight: 550; }
+.pill {
+  flex: none; width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center; font-weight: 700; font-size: 1.05rem;
+  background: hsl(var(--hue) 55% 50% / 0.16);
+  color: hsl(var(--hue) 60% 30%);
+  border: 1px solid hsl(var(--hue) 50% 55% / 0.32);
+}
+.ex-extra { margin: 0 0 12px; font-size: 0.9rem; color: var(--ink-dim); }
+
+/* ------------------------------------------- ionisation working-out */
+
+/* wide content scrolls inside itself, never the page body */
+.tw { overflow-x: auto; }
+
+.ion-table {
+  width: 100%; border-collapse: collapse; margin: 10px 0 2px;
+  font-size: 0.85rem; color: var(--ink); min-width: 340px;
+}
+.ion-table th {
+  text-align: left; font-size: 0.64rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--ink-dim); font-weight: 650;
+  padding-bottom: 5px; white-space: nowrap;
+}
+.ion-table td { padding: 6px 10px 6px 0; border-top: 1px solid var(--line); }
+.ion-table .n, .ion-table .q { font-variant-numeric: tabular-nums; }
+.ion-table th.q, .ion-table td.q { text-align: right; padding-right: 0; font-weight: 680; }
+.ion-table tfoot td {
+  border-top: 2px solid var(--sky); font-weight: 680;
+  color: var(--ink); padding-top: 8px;
+}
+
+.chg-pos  { color: hsl(38 70% 28%); }
+.chg-neg  { color: hsl(8 62% 38%); }
+.chg-zero { color: var(--ink-dim); }
+
+.ladder {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 14px 2px 6px; width: max-content; margin: 0 auto;
+}
+.lad-q {
+  flex: none; min-width: 36px; padding: 6px 9px; border-radius: 9px;
+  font-weight: 680; font-size: 0.92rem; text-align: center;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.lad-q.chg-pos  { background: hsl(38 75% 55% / 0.15); border-color: hsl(38 60% 50% / 0.45); }
+.lad-q.chg-neg  { background: hsl(8 75% 58% / 0.13);  border-color: hsl(8 60% 55% / 0.45); }
+.lad-q.chg-zero { background: var(--sky-soft); border-color: var(--sky);
+                  color: var(--sky-ink); font-weight: 700; }
+.lad-p {
+  flex: none; font-size: 0.72rem; color: var(--ink-dim);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.lad-p::before { content: "\2192\00a0"; }
+.lad-p::after  { content: "\00a0\2192"; }
+.lad-note { margin: 6px 0 0; font-size: 0.84rem; color: var(--ink-dim); }
+.ex-grid {
+  display: grid; gap: 8px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  font-size: 0.88rem;
+}
+.ex-grid > div { display: flex; flex-direction: column; }
+.ex-grid span {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-dim);
+}
+.ex-mnem {
+  margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line);
+  font-size: 0.9rem; color: var(--ink-dim); font-style: italic;
+}
+
+.btn {
+  background: var(--panel-2); border: 1px solid var(--line); color: inherit;
+  font: inherit; font-weight: 600; padding: 12px 20px; border-radius: 11px;
+  cursor: pointer; transition: background .12s, border-color .12s;
+}
+.btn:hover { border-color: var(--sky); background: var(--sky-tint); }
+.btn.primary {
+  background: var(--accent); color: var(--accent-ink); border-color: transparent;
+}
+.btn.primary:hover { filter: brightness(1.08); }
+.wide-btn {
+  width: 100%; margin-top: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.kbd {
+  font-size: 0.72rem; opacity: 0.7; border: 1px solid currentColor;
+  border-radius: 5px; padding: 0 5px; font-weight: 600;
+}
+.link {
+  background: none; border: none; color: var(--ink-dim); font: inherit;
+  cursor: pointer; padding: 0; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: var(--ink-faint);
+}
+.link:hover { color: var(--ink); }
+
+/* -------------------------------------------------------- results */
+
+.results { text-align: center; padding: 20px 0 10px; }
+.big-score {
+  font-size: 4.2rem; font-weight: 700; letter-spacing: -0.04em;
+  line-height: 1; margin: 8px 0;
+}
+.big-score span { font-size: 1.4rem; color: var(--ink-dim); font-weight: 550; margin-left: 6px; }
+.ring { color: var(--ink-dim); margin-bottom: 6px; }
+.best { color: var(--accent); font-weight: 650; }
+.clean { color: var(--good); font-weight: 600; margin-top: 26px; }
+.results h3 {
+  margin: 34px 0 14px; font-size: 0.76rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--ink-dim); font-weight: 650;
+}
+.missed {
+  display: grid; gap: 10px; text-align: left;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.missed-card {
+  display: flex; gap: 14px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid hsl(var(--hue) 62% 55%);
+  border-radius: 11px; padding: 12px 14px;
+}
+.ms-mol { flex: none; width: 96px; height: 96px; }
+.ms-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ms-note { font-size: 0.82rem; color: var(--ink-dim); font-style: italic; }
+.res-actions {
+  display: flex; gap: 10px; justify-content: center; margin-top: 32px;
+}
+
+/* ---------------------------------------------------------- study */
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.fbtn {
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink-dim);
+  font: inherit; font-size: 0.86rem; font-weight: 570;
+  padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center;
+}
+.fbtn:hover { color: var(--ink); border-color: var(--sky); }
+.fbtn.on {
+  color: var(--sky-deep); border-color: var(--sky);
+  background: var(--sky-soft);
+}
+.toggle {
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink-dim);
+  font: inherit; font-size: 0.82rem; font-weight: 570;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+}
+.toggle:hover { color: var(--sky-deep); border-color: var(--sky); background: var(--sky-tint); }
+
+.study-grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+.aacard {
+  background: var(--panel); border: 1px solid var(--line);
+  border-top: 3px solid hsl(var(--hue) 62% 55%);
+  border-radius: var(--radius); padding: 16px 18px 18px;
+  display: flex; flex-direction: column;
+}
+.aacard header { display: flex; align-items: center; gap: 12px; }
+.ac-title { flex: 1; min-width: 0; }
+.ac-title h3 {
+  margin: 0; font-size: 1.06rem; font-weight: 650; letter-spacing: -0.015em;
+}
+.mastery {
+  flex: none; width: 46px; height: 5px; border-radius: 3px;
+  background: color-mix(in srgb, var(--ink-dim) 22%, transparent);
+  overflow: hidden;
+}
+.mastery span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--sky), var(--sky-deep));
+}
+.ac-mol { height: 230px; margin: 14px 0 10px; }
+.ac-cls {
+  font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 650; color: hsl(var(--hue) 60% 32%); margin-bottom: 12px;
+}
+
+.ac-props { display: grid; gap: 7px 16px; grid-template-columns: 1fr 1fr; margin: 0; }
+.ac-props > div { display: flex; flex-direction: column; }
+.ac-props dt {
+  font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-dim);
+}
+.ac-props dd { margin: 0; font-size: 0.88rem; font-weight: 540; }
+.ac-props .codons {
+  font-family: "SF Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 0.74rem; letter-spacing: -0.01em; word-spacing: 2px;
+}
+.ac-props > div:has(.codons) { grid-column: 1 / -1; }
+
+.ac-mnem {
+  margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line);
+  font-size: 0.88rem; font-style: italic; color: var(--ink);
+}
+.ac-note { margin: 8px 0 0; font-size: 0.85rem; color: var(--ink-dim); }
+
+@media (max-width: 560px) {
+  .wrap { padding: 16px 14px 60px; }
+  .card { padding: 18px 15px; }
+  .stage { height: 240px; }
+  .grid-svg { grid-template-columns: 1fr; }
+  .opt-svg { height: 190px; }
+  .big-score { font-size: 3.2rem; }
+
+  /* The ionisation working-out is the teaching part, so it should fit on
+     a phone rather than needing a sideways swipe. .tw still wraps both
+     as a safety net if a very narrow screen defeats this. */
+  .ion-table { min-width: 0; font-size: 0.78rem; }
+  .ion-table td { padding-right: 6px; }
+  .ion-table th { font-size: 0.6rem; }
+
+  .ladder { gap: 4px; }
+  .lad-q { min-width: 28px; padding: 5px 6px; font-size: 0.82rem; }
+  .lad-p { font-size: 0.64rem; }
+  .lad-p::after { content: ""; }   /* one arrow per step is enough */
+}
+</style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%25' y='50%25' font-size='84' text-anchor='middle' dominant-baseline='central'>🧬</text></svg>">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <span class="logo">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M6 20 L13 24 L20 20 L20 12" stroke="var(--backbone)" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M13 24 L13 31" stroke="var(--rgroup)" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M20 12 L26 8" stroke="var(--backbone)" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="6" cy="20" r="2.6" fill="var(--backbone)"/>
+        <circle cx="13" cy="31" r="2.6" fill="var(--rgroup)"/>
+      </svg>
+      Amino Acid Trainer
+    </span>
+    <span class="spacer"></span>
+  </div>
+
+  <noscript>
+    <p class="noscript">This trainer draws every structure in your browser, so it
+    needs JavaScript switched on. No data leaves your device either way.</p>
+  </noscript>
+
+  <main id="app"></main>
+
+  <footer class="sitefoot">
+    <a class="coffee" href="https://buymeacoffee.com/dathan"
+       target="_blank" rel="noopener noreferrer">Buy me a coffee?</a>
+    <span class="venmo">venmo: <b>@dathanxbn</b></span>
+  </footer>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   data.js — the 20 standard proteinogenic amino acids.
+   Values follow Lehninger, Principles of Biochemistry (pKa, pI, MW)
+   and Kyte–Doolittle for hydropathy.
+   ------------------------------------------------------------------ */
+
+const CLASSES = {
+  aliphatic: {
+    id: 'aliphatic',
+    label: 'Nonpolar, aliphatic',
+    short: 'Nonpolar',
+    hue: 200,
+    blurb: 'Greasy hydrocarbon side chains. Cluster in the protein core, driven together by the hydrophobic effect.'
+  },
+  aromatic: {
+    id: 'aromatic',
+    label: 'Aromatic',
+    short: 'Aromatic',
+    hue: 272,
+    blurb: 'Bulky ring side chains. Largely hydrophobic; responsible for protein absorbance at 280 nm (Trp ≫ Tyr > Phe).'
+  },
+  polar: {
+    id: 'polar',
+    label: 'Polar, uncharged',
+    short: 'Polar',
+    hue: 158,
+    blurb: 'Neutral at pH 7 but hydrogen-bonding. Usually found on the solvent-exposed surface.'
+  },
+  acidic: {
+    id: 'acidic',
+    label: 'Negatively charged (acidic)',
+    short: 'Acidic',
+    hue: 8,
+    blurb: 'Carboxylate side chains, fully deprotonated and −1 at pH 7.'
+  },
+  basic: {
+    id: 'basic',
+    label: 'Positively charged (basic)',
+    short: 'Basic',
+    hue: 38,
+    blurb: 'Protonated and positive at pH 7 (His only partially — its pKa sits right at physiological pH).'
+  }
+};
+
+const CLASS_ORDER = ['aliphatic', 'aromatic', 'polar', 'acidic', 'basic'];
+
+/* essential: true | false | 'conditional'
+   charge7:   net charge on the SIDE CHAIN at pH 7.0
+   pKaR:      side-chain pKa (null if not ionizable)
+   hydropathy: Kyte–Doolittle index (+ = hydrophobic)                */
+
+const AAS = [
+  {
+    code: 'G', three: 'Gly', name: 'Glycine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.97, mw: 75.07, essential: false, hydropathy: -0.4,
+    group: 'Hydrogen (no side chain)', groupKey: 'none',
+    codons: ['GGU', 'GGC', 'GGA', 'GGG'],
+    mnemonic: 'G for Glycine — the only achiral one, side chain is just an H.',
+    note: 'Smallest amino acid. Its tiny side chain gives the backbone unusual conformational freedom, so it shows up at tight turns and in collagen every third residue.'
+  },
+  {
+    code: 'A', three: 'Ala', name: 'Alanine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 6.01, mw: 89.09, essential: false, hydropathy: 1.8,
+    group: 'Methyl', groupKey: 'alkyl',
+    codons: ['GCU', 'GCC', 'GCA', 'GCG'],
+    mnemonic: 'A for Alanine — the simplest carbon side chain, one CH₃.',
+    note: 'The reference "average" residue. Strong α-helix former.'
+  },
+  {
+    code: 'V', three: 'Val', name: 'Valine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.97, mw: 117.15, essential: true, hydropathy: 4.2,
+    group: 'Isopropyl (branched alkyl)', groupKey: 'alkyl',
+    codons: ['GUU', 'GUC', 'GUA', 'GUG'],
+    mnemonic: 'V for Valine — the V-shaped fork of two methyls on Cβ.',
+    note: 'Branched at the β-carbon, which crowds the backbone and favors β-sheets over helices. Glu→Val at position 6 of β-globin causes sickle-cell disease.'
+  },
+  {
+    code: 'L', three: 'Leu', name: 'Leucine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.98, mw: 131.17, essential: true, hydropathy: 3.8,
+    group: 'Isobutyl (branched alkyl)', groupKey: 'alkyl',
+    codons: ['UUA', 'UUG', 'CUU', 'CUC', 'CUA', 'CUG'],
+    mnemonic: 'Leucine vs Isoleucine: Leu branches LATE (at Cγ), Ile branches EARLY (at Cβ).',
+    note: 'The most abundant residue in most proteomes, and the core of the "leucine zipper" dimerization motif.'
+  },
+  {
+    code: 'I', three: 'Ile', name: 'Isoleucine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 6.02, mw: 131.17, essential: true, hydropathy: 4.5,
+    group: 'sec-Butyl (branched alkyl)', groupKey: 'alkyl',
+    codons: ['AUU', 'AUC', 'AUA'],
+    mnemonic: 'I for Isoleucine — branches at Cβ, so it has a second chiral center.',
+    note: 'Strongly hydrophobic, and isomeric with Leu — same formula, different branch point.'
+  },
+  {
+    code: 'P', three: 'Pro', name: 'Proline', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 6.48, mw: 115.13, essential: false, hydropathy: -1.6,
+    group: 'Pyrrolidine ring (secondary amine)', groupKey: 'ring-n',
+    codons: ['CCU', 'CCC', 'CCA', 'CCG'],
+    mnemonic: 'P for Proline — the Prison: its side chain loops back and locks the nitrogen in a ring.',
+    note: 'The only secondary amine ("imino acid"). The ring fixes the backbone angle and removes the amide N–H, so Pro breaks α-helices and β-sheets and is a helix-capping / turn residue.'
+  },
+  {
+    code: 'M', three: 'Met', name: 'Methionine', alt: [],
+    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.74, mw: 149.21, essential: true, hydropathy: 1.9,
+    group: 'Thioether (S–CH₃)', groupKey: 'sulfur',
+    codons: ['AUG'],
+    mnemonic: 'M for Met — the START. AUG is the only codon, and it is the initiator residue.',
+    note: 'One of two sulfur-containing amino acids, but its thioether will not form disulfides. Precursor of SAM, the cell\'s universal methyl donor.'
+  },
+  {
+    code: 'F', three: 'Phe', name: 'Phenylalanine', alt: [],
+    cls: 'aromatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.48, mw: 165.19, essential: true, hydropathy: 2.8,
+    group: 'Phenyl (benzene ring)', groupKey: 'aromatic',
+    codons: ['UUU', 'UUC'],
+    mnemonic: 'F = "Fenylalanine" — spell it with an F and the one-letter code is obvious.',
+    note: 'Alanine with a benzene ring bolted on. Strongly hydrophobic. Builds up toxically in phenylketonuria (PKU).'
+  },
+  {
+    code: 'Y', three: 'Tyr', name: 'Tyrosine', alt: [],
+    cls: 'aromatic', polarity: 'polar', charge7: 0,
+    pKaR: 10.07, pI: 5.66, mw: 181.19, essential: false, hydropathy: -1.3,
+    group: 'Phenol (aromatic –OH)', groupKey: 'hydroxyl',
+    codons: ['UAU', 'UAC'],
+    mnemonic: 'tYrosine — the Y is right there in the name; the letter Y even looks like the phenol\'s –OH stub.',
+    note: 'Phe plus a para hydroxyl, which makes it polar and weakly acidic (pKa ≈ 10.1). A major phosphorylation site in signaling; precursor of dopamine, adrenaline, melanin and thyroid hormone.'
+  },
+  {
+    code: 'W', three: 'Trp', name: 'Tryptophan', alt: [],
+    cls: 'aromatic', polarity: 'nonpolar', charge7: 0,
+    pKaR: null, pI: 5.89, mw: 204.23, essential: true, hydropathy: -0.9,
+    group: 'Indole (bicyclic)', groupKey: 'aromatic',
+    codons: ['UGG'],
+    mnemonic: 'W = "double-u" = the double ring. Also the biggest letter for the biggest residue.',
+    note: 'Largest and heaviest amino acid (204 Da). Its indole dominates protein absorbance at 280 nm. Precursor of serotonin, melatonin and niacin.'
+  },
+  {
+    code: 'S', three: 'Ser', name: 'Serine', alt: [],
+    cls: 'polar', polarity: 'polar', charge7: 0,
+    pKaR: null, pI: 5.68, mw: 105.09, essential: false, hydropathy: -0.8,
+    group: 'Hydroxyl (primary alcohol)', groupKey: 'hydroxyl',
+    codons: ['UCU', 'UCC', 'UCA', 'UCG', 'AGU', 'AGC'],
+    mnemonic: 'S for Serine — Small, with a Simple –OH. (Ser = Ala + OH.)',
+    note: 'A phosphorylation target and the nucleophile in serine proteases (chymotrypsin, trypsin) via the catalytic triad.'
+  },
+  {
+    code: 'T', three: 'Thr', name: 'Threonine', alt: [],
+    cls: 'polar', polarity: 'polar', charge7: 0,
+    pKaR: null, pI: 5.87, mw: 119.12, essential: true, hydropathy: -0.7,
+    group: 'Hydroxyl (secondary alcohol)', groupKey: 'hydroxyl',
+    codons: ['ACU', 'ACC', 'ACA', 'ACG'],
+    mnemonic: 'T for Threonine — Ser with an extra methyl, so it is the branched (β-carbon) alcohol.',
+    note: 'Like Ile, branched at Cβ with two chiral centers. Also a phosphorylation site and an O-glycosylation anchor.'
+  },
+  {
+    code: 'C', three: 'Cys', name: 'Cysteine', alt: [],
+    cls: 'polar', polarity: 'polar', charge7: 0,
+    pKaR: 8.18, pI: 5.07, mw: 121.16, essential: false, hydropathy: 2.5,
+    group: 'Thiol / sulfhydryl (–SH)', groupKey: 'sulfur',
+    codons: ['UGU', 'UGC'],
+    mnemonic: 'C for Cysteine — and C for the Cross-links (disulfide bridges) it forms.',
+    note: 'Serine with S in place of O. Two cysteines oxidize to a disulfide bond (cystine), the main covalent cross-link stabilizing secreted proteins. Often listed as "special" rather than plainly polar.'
+  },
+  {
+    code: 'N', three: 'Asn', name: 'Asparagine', alt: [],
+    cls: 'polar', polarity: 'polar', charge7: 0,
+    pKaR: null, pI: 5.41, mw: 132.12, essential: false, hydropathy: -3.5,
+    group: 'Amide (carboxamide)', groupKey: 'amide',
+    codons: ['AAU', 'AAC'],
+    mnemonic: 'AsparagiNe → N. It is the amide of Aspartate: swap the –OH for –NH₂.',
+    note: 'Amide of Asp — neutral, never charged. A common site for N-linked glycosylation.'
+  },
+  {
+    code: 'Q', three: 'Gln', name: 'Glutamine', alt: [],
+    cls: 'polar', polarity: 'polar', charge7: 0,
+    pKaR: null, pI: 5.65, mw: 146.15, essential: false, hydropathy: -3.5,
+    group: 'Amide (carboxamide)', groupKey: 'amide',
+    codons: ['CAA', 'CAG'],
+    mnemonic: 'Q-tamine — "Gln" sounds like Q, and Q is the leftover letter next to N.',
+    note: 'Amide of Glu, one carbon longer than Asn. The main nitrogen shuttle in blood and the most abundant free amino acid in the body.'
+  },
+  {
+    code: 'D', three: 'Asp', name: 'Aspartate', alt: ['Aspartic acid'],
+    cls: 'acidic', polarity: 'charged', charge7: -1,
+    pKaR: 3.65, pI: 2.77, mw: 133.10, essential: false, hydropathy: -3.5,
+    group: 'Carboxyl / carboxylate (–COO⁻)', groupKey: 'carboxyl',
+    codons: ['GAU', 'GAC'],
+    mnemonic: 'AsparDic acid → D. D is the shorter acid; E is D plus one CH₂.',
+    note: 'Negative at pH 7 (side-chain pKa ≈ 3.9). Frequent metal-binding and catalytic residue; part of the catalytic triad in serine proteases.'
+  },
+  {
+    code: 'E', three: 'Glu', name: 'Glutamate', alt: ['Glutamic acid'],
+    cls: 'acidic', polarity: 'charged', charge7: -1,
+    pKaR: 4.25, pI: 3.22, mw: 147.13, essential: false, hydropathy: -3.5,
+    group: 'Carboxyl / carboxylate (–COO⁻)', groupKey: 'carboxyl',
+    codons: ['GAA', 'GAG'],
+    mnemonic: 'GlutamatE → E. Think "E is longEr than D" by exactly one CH₂.',
+    note: 'The principal excitatory neurotransmitter in the CNS, and the flavor behind MSG.'
+  },
+  {
+    code: 'K', three: 'Lys', name: 'Lysine', alt: [],
+    cls: 'basic', polarity: 'charged', charge7: 1,
+    pKaR: 10.53, pI: 9.74, mw: 146.19, essential: true, hydropathy: -3.9,
+    group: 'Primary amine / ammonium (–NH₃⁺)', groupKey: 'amine',
+    codons: ['AAA', 'AAG'],
+    mnemonic: 'Lysine takes K because L was already claimed by Leucine — K is the nearest free letter.',
+    note: 'Long flexible arm ending in –NH₃⁺; positive at pH 7. Prime target for acetylation and methylation in histone regulation.'
+  },
+  {
+    code: 'R', three: 'Arg', name: 'Arginine', alt: [],
+    cls: 'basic', polarity: 'charged', charge7: 1,
+    pKaR: 12.48, pI: 10.76, mw: 174.20, essential: 'conditional', hydropathy: -4.5,
+    group: 'Guanidinium', groupKey: 'guanidinium',
+    codons: ['CGU', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG'],
+    mnemonic: 'aRginine → R. Most basic of all (pKa ≈ 12.5), so it is essentially always positive.',
+    note: 'Its guanidinium group spreads the + charge over three nitrogens, making it the strongest base and strongly hydrophilic. Precursor of nitric oxide.'
+  },
+  {
+    /* charge7 is 0, not +1: the imidazole pKa (6.0) sits BELOW pH 7, so
+       at pH 7 the side chain is predominantly deprotonated (~9% still
+       protonated by Henderson–Hasselbalch). His is still classed as
+       basic — that is about the group's chemistry, not its state here. */
+    code: 'H', three: 'His', name: 'Histidine', alt: [],
+    cls: 'basic', polarity: 'charged', charge7: 0,
+    pKaR: 6.00, pI: 7.59, mw: 155.15, essential: true, hydropathy: -3.2,
+    group: 'Imidazole', groupKey: 'ring-n',
+    codons: ['CAU', 'CAC'],
+    mnemonic: 'H for His — and H for the H⁺ it hands back and forth. The only side chain that buffers near pH 7.',
+    note: 'Side-chain pKa ≈ 6.0, so it sits right at physiological pH and is only partly protonated — which is exactly why it is the workhorse acid/base catalyst and the classic metal-coordinating residue (e.g. heme iron).'
+  }
+];
+
+/* Lookup helpers -------------------------------------------------- */
+const BY_CODE = Object.fromEntries(AAS.map(a => [a.code, a]));
+const ALL_CODES = AAS.map(a => a.code);
+
+function aa(code) { return BY_CODE[code]; }
+
+/* Accepted spellings when the player types a full name */
+function nameMatches(input, a) {
+  const norm = s => s.toLowerCase().replace(/[^a-z]/g, '');
+  const target = [a.name, ...a.alt].map(norm);
+  return target.includes(norm(input));
+}
+
+/* Charge label used across quizzes and cards */
+function chargeLabel(a) {
+  if (a.charge7 > 0) return '+1';
+  if (a.charge7 < 0) return '−1';
+  return '0 (neutral)';
+}
+
+/* Shown on the reference card and the post-answer panel, but never quizzed. */
+function essentialLabel(a) {
+  if (a.essential === true) return 'Essential';
+  if (a.essential === 'conditional') return 'Conditionally essential';
+  return 'Non-essential';
+}
+
+/* ------------------------------------------------------------------
+   Ionisation: backbone pKa values (Lehninger Table 3-1).
+   [pK1, pK2] = α-carboxyl, α-amino. Together with pKaR above these
+   reproduce every pI in this file exactly — see computePI().
+   ------------------------------------------------------------------ */
+const BACKBONE_PKA = {
+  G: [2.34, 9.60],  A: [2.34, 9.69],  V: [2.32, 9.62],  L: [2.36, 9.60],
+  I: [2.36, 9.68],  P: [1.99, 10.96], M: [2.28, 9.21],  F: [1.83, 9.13],
+  Y: [2.20, 9.11],  W: [2.38, 9.39],  S: [2.21, 9.15],  T: [2.11, 9.62],
+  C: [1.96, 10.28], N: [2.02, 8.80],  Q: [2.17, 9.13],  D: [1.88, 9.60],
+  E: [2.19, 9.67],  K: [2.18, 8.95],  R: [2.17, 9.04],  H: [1.82, 9.17]
+};
+
+/* Side chains that LOSE a proton to become negative, vs those that
+   HOLD one to stay positive. Cys (thiol) and Tyr (phenol) are acids
+   even though neither is in the "acidic" class.
+   pKaLadder() below branches on R_BASIC; R_ACIDIC is the stated
+   complement, and verify.js checks the two agree. */
+const R_ACIDIC = ['D', 'E', 'C', 'Y'];
+const R_BASIC  = ['K', 'R', 'H'];
+
+/* Every ionisable group, low pKa to high. `from`/`to` are the charge
+   contributions below and above that group's pKa. */
+function pKaLadder(code) {
+  const a = BY_CODE[code];
+  const [pK1, pK2] = BACKBONE_PKA[code];
+  const rungs = [
+    { pKa: pK1, from: 0, to: -1, group: 'α-carboxyl', label: '–COOH → –COO⁻' },
+    { pKa: pK2, from: 1, to: 0, group: 'α-amino', label: '–NH₃⁺ → –NH₂' }
+  ];
+  if (a.pKaR) {
+    rungs.push(R_BASIC.includes(code)
+      ? { pKa: a.pKaR, from: 1, to: 0, group: 'side chain', label: 'protonated → neutral', kind: 'base' }
+      : { pKa: a.pKaR, from: 0, to: -1, group: 'side chain', label: 'neutral → deprotonated', kind: 'acid' });
+  }
+  return rungs.sort((x, y) => x.pKa - y.pKa);
+}
+
+/* Net charge on the whole amino acid at a given pH. A group is
+   deprotonated once pH climbs past its pKa. */
+function netChargeAt(code, pH) {
+  return pKaLadder(code)
+    .reduce((sum, g) => sum + (pH > g.pKa ? g.to : g.from), 0);
+}
+
+/* pI is the midpoint of the two pKa values that bracket the species
+   carrying no net charge. */
+function computePI(code) {
+  const L = pKaLadder(code);
+  let charge = L.reduce((s, g) => s + g.from, 0);   // fully protonated
+  for (let i = 0; i < L.length; i++) {
+    charge += L[i].to - L[i].from;                  // deprotonate group i
+    if (charge === 0 && i + 1 < L.length) {
+      return { pI: (L[i].pKa + L[i + 1].pKa) / 2, pair: [L[i], L[i + 1]] };
+    }
+  }
+  return null;
+}
+
+function chargeStr(n) {
+  if (n > 0) return '+' + n;
+  if (n < 0) return '−' + Math.abs(n);
+  return '0';
+}
+</script>
+<script>
+/* ------------------------------------------------------------------
+   chem.js — builds each amino acid from bond vectors and renders it
+   as an SVG skeletal formula.
+
+   Everything is laid out on a unit-bond-length grid with proper 120°
+   angles. The backbone is identical for all twenty; only the side
+   chain differs, and the side chain is tagged so it can be coloured
+   separately — that contrast is the whole point of the drawing.
+   ------------------------------------------------------------------ */
+
+const DIR = {
+  u:  [0, -1],
+  d:  [0, 1],
+  ur: [0.866, -0.5],
+  dr: [0.866, 0.5],
+  ul: [-0.866, -0.5],
+  dl: [-0.866, 0.5]
+};
+
+function Mol() {
+  const map = {};
+  const list = [];
+  const bonds = [];
+
+  const M = {
+    list, bonds,
+    get(id) { return map[id]; },
+
+    put(id, x, y, o = {}) {
+      const at = {
+        id, x, y,
+        el: o.el || 'C',
+        text: o.text || null,
+        anchor: o.anchor || 'middle',
+        side: !!o.side
+      };
+      map[id] = at;
+      list.push(at);
+      return M;
+    },
+
+    /* place a new atom one bond length from `from` in direction `dir` */
+    go(from, dir, id, o = {}) {
+      const f = map[from];
+      const v = Array.isArray(dir) ? dir : DIR[dir];
+      M.put(id, f.x + v[0], f.y + v[1], o);
+      M.bond(from, id, o.order || 1);
+      return M;
+    },
+
+    bond(a, b, order = 1, inner = null) {
+      bonds.push({ a, b, order, inner, side: map[a].side || map[b].side });
+      return M;
+    },
+
+    /* upgrade an existing bond to a double bond */
+    dbl(a, b, inner = null) {
+      const bd = bonds.find(x =>
+        (x.a === a && x.b === b) || (x.a === b && x.b === a));
+      if (bd) { bd.order = 2; bd.inner = inner; }
+      return M;
+    }
+  };
+  return M;
+}
+
+/* A regular n-ring hanging off `ipso`, growing away from `from`.
+   `ids` holds the n-1 new atom ids in ring order.                   */
+function attachRing(M, ipso, from, n, ids, o = {}, cw = true) {
+  const P = M.get(ipso), F = M.get(from);
+  let vx = P.x - F.x, vy = P.y - F.y;
+  const L = Math.hypot(vx, vy); vx /= L; vy /= L;
+
+  const R = 0.5 / Math.sin(Math.PI / n);
+  const cx = P.x + vx * R, cy = P.y + vy * R;
+  const a0 = Math.atan2(P.y - cy, P.x - cx);
+  const step = (cw ? 1 : -1) * 2 * Math.PI / n;
+
+  const verts = [ipso];
+  ids.forEach((id, i) => {
+    const a = a0 + step * (i + 1);
+    M.put(id, cx + R * Math.cos(a), cy + R * Math.sin(a), o);
+    verts.push(id);
+  });
+  for (let i = 0; i < verts.length; i++) {
+    M.bond(verts[i], verts[(i + 1) % verts.length]);
+  }
+  return { verts, c: [cx, cy] };
+}
+
+/* A ring fused onto the existing bond aId–bId, built on the side of
+   that bond facing away from the point `away`.
+   `ids` holds the n-2 new atom ids, ordered from bId round to aId.  */
+function fuseRing(M, aId, bId, n, ids, away, o = {}) {
+  const A = M.get(aId), B = M.get(bId);
+  const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+
+  let px = -(B.y - A.y), py = B.x - A.x;
+  const L = Math.hypot(px, py); px /= L; py /= L;
+  if ((mx - away[0]) * px + (my - away[1]) * py < 0) { px = -px; py = -py; }
+
+  const R = 0.5 / Math.sin(Math.PI / n);
+  const ap = 0.5 / Math.tan(Math.PI / n);
+  const cx = mx + px * ap, cy = my + py * ap;
+
+  const aB = Math.atan2(B.y - cy, B.x - cx);
+  const aA = Math.atan2(A.y - cy, A.x - cx);
+  let diff = aA - aB;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const step = -Math.sign(diff) * 2 * Math.PI / n;
+
+  const verts = [bId];
+  ids.forEach((id, i) => {
+    const ang = aB + step * (i + 1);
+    M.put(id, cx + R * Math.cos(ang), cy + R * Math.sin(ang), o);
+    verts.push(id);
+  });
+  verts.push(aId);
+  for (let i = 0; i < verts.length - 1; i++) M.bond(verts[i], verts[i + 1]);
+  return { verts, c: [cx, cy] };
+}
+
+/* ------------------------------------------------------------------
+   The shared backbone.  Cα sits at the origin; the amino group runs
+   down-left, the carboxyl down-right, and the side chain hangs
+   straight down.  All three angles are 120°.
+   ------------------------------------------------------------------ */
+function backbone(M, iso) {
+  M.put('CA', 0, 0);
+  M.put('N', -0.866, -0.5, {
+    el: 'N', text: iso ? 'H₃N⁺' : 'H₂N', anchor: 'end'
+  });
+  M.bond('N', 'CA');
+  M.put('C', 0.866, -0.5);
+  M.bond('CA', 'C');
+  M.put('O1', 0.866, -1.5, { el: 'O', text: 'O' });
+  M.bond('C', 'O1', 2);
+  M.put('O2', 1.732, 0, {
+    el: 'O', text: iso ? 'O⁻' : 'OH', anchor: 'start'
+  });
+  M.bond('C', 'O2');
+}
+
+/* R marks every side-chain atom so the renderer can colour it. */
+const R = { side: true };
+const RN = { side: true, el: 'N' };
+const RO = { side: true, el: 'O' };
+const RS = { side: true, el: 'S' };
+
+/* ------------------------------------------------------------------
+   Side chains.  Each receives the molecule (backbone already built)
+   and a flag for the pH-7 / ionised depiction.
+   ------------------------------------------------------------------ */
+const SIDECHAIN = {
+
+  G(M) {
+    M.go('CA', 'd', 'HB', { ...R, el: 'H', text: 'H' });
+  },
+
+  A(M) {
+    M.go('CA', 'd', 'CB', R);
+  },
+
+  V(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG1', R)
+     .go('CB', 'dr', 'CG2', R);
+  },
+
+  L(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'CD1', R)
+     .go('CG', 'ul', 'CD2', R);
+  },
+
+  I(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG1', R)
+     .go('CG1', 'd', 'CD1', R)
+     .go('CB', 'dr', 'CG2', R);
+  },
+
+  P(M, iso) {
+    /* the side chain closes back onto the backbone nitrogen */
+    M.get('N').text = iso ? 'H₂N⁺' : 'HN';
+    M.get('N').anchor = 'middle';
+    fuseRing(M, 'CA', 'N', 5, ['CB', 'CG', 'CD'], [0.866, -0.5], R);
+  },
+
+  M(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'SD', { ...RS, text: 'S' })
+     .go('SD', 'dl', 'CE', R);
+  },
+
+  F(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R);
+    const ring = attachRing(M, 'CG', 'CB', 6,
+      ['CD1', 'CE1', 'CZ', 'CE2', 'CD2'], R);
+    M.dbl('CG', 'CD1', ring.c)
+     .dbl('CE1', 'CZ', ring.c)
+     .dbl('CE2', 'CD2', ring.c);
+  },
+
+  Y(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R);
+    const ring = attachRing(M, 'CG', 'CB', 6,
+      ['CD1', 'CE1', 'CZ', 'CE2', 'CD2'], R);
+    M.dbl('CG', 'CD1', ring.c)
+     .dbl('CE1', 'CZ', ring.c)
+     .dbl('CE2', 'CD2', ring.c);
+
+    /* para hydroxyl: straight out from the ring centre through CZ */
+    const CZ = M.get('CZ');
+    let vx = CZ.x - ring.c[0], vy = CZ.y - ring.c[1];
+    const L = Math.hypot(vx, vy); vx /= L; vy /= L;
+    M.put('OH', CZ.x + vx, CZ.y + vy, { ...RO, text: 'OH' });
+    M.bond('CZ', 'OH');
+  },
+
+  W(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R);
+    /* pyrrole half of the indole */
+    const five = attachRing(M, 'CG', 'CB', 5,
+      ['CD1', 'NE1', 'CE2', 'CD2'], R);
+    M.get('NE1').el = 'N';
+    M.get('NE1').text = 'NH';
+    M.dbl('CG', 'CD1', five.c);
+    /* benzo half, fused on C7a–C3a */
+    const six = fuseRing(M, 'CE2', 'CD2', 6,
+      ['CE3', 'CZ3', 'CH2', 'CZ2'], five.c, R);
+    M.dbl('CD2', 'CE3', six.c)
+     .dbl('CZ3', 'CH2', six.c)
+     .dbl('CZ2', 'CE2', six.c);
+  },
+
+  S(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'OG', { ...RO, text: 'OH', anchor: 'end' });
+  },
+
+  T(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'OG1', { ...RO, text: 'OH', anchor: 'end' })
+     .go('CB', 'dr', 'CG2', R);
+  },
+
+  C(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'SG', { ...RS, text: 'SH', anchor: 'end' });
+  },
+
+  N(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'ul', 'OD1', { ...RO, text: 'O', order: 2 })
+     .go('CG', 'd', 'ND2', { ...RN, text: 'NH₂' });
+  },
+
+  Q(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'CD', R)
+     .go('CD', 'dl', 'OE1', { ...RO, text: 'O', order: 2 })
+     .go('CD', 'dr', 'NE2', { ...RN, text: 'NH₂', anchor: 'start' });
+  },
+
+  D(M, iso) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'ul', 'OD1', { ...RO, text: 'O', order: 2 })
+     .go('CG', 'd', 'OD2', { ...RO, text: iso ? 'O⁻' : 'OH' });
+  },
+
+  E(M, iso) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'CD', R)
+     .go('CD', 'dl', 'OE1', { ...RO, text: 'O', order: 2 })
+     .go('CD', 'dr', 'OE2', { ...RO, text: iso ? 'O⁻' : 'OH', anchor: 'start' });
+  },
+
+  K(M, iso) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'CD', R)
+     .go('CD', 'dl', 'CE', R)
+     .go('CE', 'd', 'NZ', { ...RN, text: iso ? 'NH₃⁺' : 'NH₂' });
+  },
+
+  R(M, iso) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R)
+     .go('CG', 'd', 'CD', R)
+     .go('CD', 'dl', 'NE', { ...RN, text: 'NH', anchor: 'end' })
+     .go('NE', 'd', 'CZ', R)
+     .go('CZ', 'dl', 'NH1', { ...RN, text: iso ? 'NH₂⁺' : 'NH', order: 2 })
+     .go('CZ', 'dr', 'NH2', { ...RN, text: 'NH₂', anchor: 'start' });
+  },
+
+  H(M) {
+    M.go('CA', 'd', 'CB', R)
+     .go('CB', 'dl', 'CG', R);
+    const ring = attachRing(M, 'CG', 'CB', 5,
+      ['ND1', 'CE1', 'NE2', 'CD2'], R);
+    const nd1 = M.get('ND1'), ne2 = M.get('NE2');
+    nd1.el = 'N'; nd1.text = 'N';
+    ne2.el = 'N'; ne2.text = 'NH';
+    M.dbl('ND1', 'CE1', ring.c)
+     .dbl('CD2', 'CG', ring.c);
+  }
+};
+
+function buildAA(code, iso) {
+  const M = Mol();
+  backbone(M, iso);
+  SIDECHAIN[code](M, iso);
+  return M;
+}
+
+/* ------------------------------------------------------------------
+   Rendering
+   ------------------------------------------------------------------ */
+
+const CHAR_HALF = 0.115;   // half-width of one character, in bond units
+const LINE_HALF = 0.30;    // half-height of a text label
+
+/* how far the label sticks out from the atom position, per side */
+function extent(at) {
+  if (!at.text) return { l: 0.05, r: 0.05, u: 0.05, d: 0.05 };
+  const full = 2 * (CHAR_HALF * at.text.length + 0.05);
+  if (at.anchor === 'end') {
+    return { l: full - CHAR_HALF, r: CHAR_HALF, u: LINE_HALF, d: LINE_HALF };
+  }
+  if (at.anchor === 'start') {
+    return { l: CHAR_HALF, r: full - CHAR_HALF, u: LINE_HALF, d: LINE_HALF };
+  }
+  return { l: full / 2, r: full / 2, u: LINE_HALF, d: LINE_HALF };
+}
+
+/* distance from the atom centre to the edge of its label, along (dx,dy) */
+function trim(at, dx, dy) {
+  if (!at.text) return 0;
+  const ax = at.anchor === 'middle'
+    ? CHAR_HALF * at.text.length + 0.09
+    : 0.27;
+  const ay = 0.33;
+  return 1 / Math.hypot(dx / ax, dy / ay);
+}
+
+function textX(at) {
+  if (at.anchor === 'end') return at.x + CHAR_HALF;
+  if (at.anchor === 'start') return at.x - CHAR_HALF;
+  return at.x;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Returns an <svg> string. opts: { form: 'neutral'|'ion', plain: bool } */
+function moleculeSVG(code, opts = {}) {
+  const iso = opts.form === 'ion';
+  const M = buildAA(code, iso);
+  const pad = opts.pad != null ? opts.pad : 0.45;
+
+  let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+  for (const at of M.list) {
+    const e = extent(at);
+    minx = Math.min(minx, at.x - e.l); maxx = Math.max(maxx, at.x + e.r);
+    miny = Math.min(miny, at.y - e.u); maxy = Math.max(maxy, at.y + e.d);
+  }
+  minx -= pad; maxx += pad; miny -= pad; maxy += pad;
+
+  const parts = [];
+
+  for (const bd of M.bonds) {
+    const A = M.get(bd.a), B = M.get(bd.b);
+    let dx = B.x - A.x, dy = B.y - A.y;
+    const len = Math.hypot(dx, dy); dx /= len; dy /= len;
+
+    const tA = trim(A, dx, dy);
+    const tB = trim(B, dx, dy);
+    const x1 = A.x + dx * tA, y1 = A.y + dy * tA;
+    const x2 = B.x - dx * tB, y2 = B.y - dy * tB;
+    const cls = bd.side ? 'sc' : 'bb';
+
+    if (bd.order === 2) {
+      const px = -dy, py = dx;
+      if (bd.inner) {
+        /* ring double bond: full outer line plus a shortened inner one */
+        const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+        const s = ((bd.inner[0] - mx) * px + (bd.inner[1] - my) * py) >= 0 ? 1 : -1;
+        const o = 0.16 * s;
+        const k = 0.16;
+        parts.push(line(x1, y1, x2, y2, cls));
+        parts.push(line(
+          x1 + px * o + dx * k, y1 + py * o + dy * k,
+          x2 + px * o - dx * k, y2 + py * o - dy * k, cls));
+      } else {
+        const o = 0.085;
+        parts.push(line(x1 + px * o, y1 + py * o, x2 + px * o, y2 + py * o, cls));
+        parts.push(line(x1 - px * o, y1 - py * o, x2 - px * o, y2 - py * o, cls));
+      }
+    } else {
+      parts.push(line(x1, y1, x2, y2, cls));
+    }
+  }
+
+  for (const at of M.list) {
+    if (!at.text) continue;
+    const cls = (at.side ? 'sc' : 'bb') + ' el-' + at.el;
+    parts.push(
+      `<text x="${f(textX(at))}" y="${f(at.y)}" text-anchor="${at.anchor}" ` +
+      `class="${cls}">${esc(at.text)}</text>`);
+  }
+
+  const w = maxx - minx, h = maxy - miny;
+  return `<svg class="mol${opts.plain ? ' plain' : ''}" viewBox="${f(minx)} ${f(miny)} ${f(w)} ${f(h)}" ` +
+         `preserveAspectRatio="xMidYMid meet" role="img" ` +
+         `aria-label="Skeletal structure of ${esc(aa(code).name)}">${parts.join('')}</svg>`;
+}
+
+function line(x1, y1, x2, y2, cls) {
+  return `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" class="${cls}"/>`;
+}
+
+function f(n) { return Math.round(n * 1000) / 1000; }
+</script>
+<script>
+/* ------------------------------------------------------------------
+   app.js — screens, question generation, scoring and progress.
+   ------------------------------------------------------------------ */
+
+const ROUND_LEN = 12;
+const GAUNTLET_SECONDS = 90;
+
+/* ------------------------------------------------------------ yield
+
+   Every mode and every question variant carries a tier. These are
+   judgement calls about how often the topic actually turns up, not an
+   official AAMC ranking — the slider on the menu sets the ceiling.
+
+   HI  core content that appears on nearly every exam
+   MED genuinely tested, but more specific
+   LOW true and worth knowing, rarely examined
+
+   The reference table ignores this entirely and always shows all of it.
+   ------------------------------------------------------------------ */
+const HI = 1, MED = 2, LOW = 3;
+
+/* Every mode is always available and always covers its full content.
+   The yield slider narrows the Gauntlet only — see GENERATORS.gauntlet. */
+const MODES = [
+  { id: 'struct2name', glyph: '⬡', name: 'Structure → Name',
+    desc: 'See a skeletal structure, name the amino acid.' },
+  { id: 'name2struct', glyph: '◈', name: 'Name → Structure',
+    desc: 'Given the name, pick the right side chain out of four.' },
+  { id: 'codes', glyph: 'Aa', name: 'Abbreviations',
+    desc: 'Type the one- and three-letter codes. Fast drilling.' },
+  { id: 'classify', glyph: '▤', name: 'Classify',
+    desc: 'Sort each residue into its side-chain class.' },
+  { id: 'props', glyph: '±', name: 'Properties',
+    desc: 'Charge, pKa, functional groups, biochemistry trivia.' },
+  { id: 'charge', glyph: 'pH', name: 'Charge at pH',
+    desc: 'Net charge at any pH, worked out group by group against each pKa.' },
+  { id: 'isoelectric', glyph: 'pI', name: 'pKa & pI',
+    desc: 'Which two pKa values set the pI, and which way a residue runs on a gel.' },
+  { id: 'gauntlet', glyph: '⏱', name: 'Gauntlet',
+    desc: `Everything at once, ${GAUNTLET_SECONDS} seconds on the clock.` }
+];
+
+/* These describe the Gauntlet only. The other modes always run at full
+   coverage no matter where the slider sits. */
+const YIELD_LEVELS = [
+  { name: 'High yield',
+    blurb: 'Only what turns up on nearly every exam: structures, one-letter codes, side-chain classes, charge at physiological pH, and the rule for finding a pI.' },
+  { name: 'Exam scope',
+    blurb: 'Everything the AAMC actually tests: adds three-letter codes, functional groups, pI estimation and gel migration.' },
+  { name: 'Everything',
+    blurb: 'Adds the rarely-examined long tail. The other modes always cover everything, whatever this is set to.' }
+];
+
+/* The slider governs the Gauntlet and nothing else. Outside it this flag
+   is false, the ceiling opens to LOW, and every standalone mode serves
+   its full range of questions regardless of where the slider sits. */
+let yieldActive = false;
+
+/* slider index 0,1,2 -> tier ceiling 1,2,3 */
+function yieldCap() { return yieldActive ? S.yield + 1 : LOW; }
+
+/* Keep only items at or below the ceiling, never returning nothing. */
+function atYield(items) {
+  const cap = yieldCap();
+  const ok = items.filter(i => i.y <= cap);
+  return ok.length ? ok : items;
+}
+
+/* ---------------------------------------------------------- state */
+
+const S = {
+  screen: 'home',
+  mode: null,
+  form: 'neutral',
+  yield: 1,
+  off: [],
+  q: null,
+  answered: false,
+  idx: 0,
+  score: 0,
+  streak: 0,
+  best: 0,
+  missed: [],
+  recent: [],
+  timer: null,
+  timeLeft: 0
+};
+
+const STORE_KEY = 'aa-game-v1';
+let stats = {};
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      stats = d.stats || {};
+      S.form = d.form || 'neutral';
+      S.best = d.best || 0;
+      if (d.yield === 0 || d.yield === 1 || d.yield === 2) S.yield = d.yield;
+      /* Drop anything unrecognised, and never restore a set so small
+         the games cannot run — a corrupted key should not brick it. */
+      if (Array.isArray(d.off)) {
+        const off = d.off.filter(c => ALL_CODES.includes(c));
+        S.off = (ALL_CODES.length - off.length >= MIN_ACTIVE) ? off : [];
+      }
+    }
+  } catch (e) { /* file:// with storage disabled — run in memory */ }
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY,
+      JSON.stringify({ stats, form: S.form, best: S.best,
+                       yield: S.yield, off: S.off }));
+  } catch (e) { /* ignore */ }
+}
+
+function stat(code) {
+  if (!stats[code]) stats[code] = { seen: 0, correct: 0, streak: 0 };
+  return stats[code];
+}
+
+function record(code, ok) {
+  const s = stat(code);
+  s.seen++;
+  if (ok) { s.correct++; s.streak++; }
+  else { s.streak = 0; }
+  save();
+}
+
+function mastery(code) {
+  const s = stats[code];
+  if (!s || !s.seen) return 0;
+  return Math.min(1, s.streak / 5);
+}
+
+/* ------------------------------------------------------- study set
+
+   Clicking a chip on the menu takes that residue out of every game.
+   S.off holds the skipped ones. At least MIN_ACTIVE must stay in so the
+   generators always have something to work with, and multiple choice
+   scales down to however many are left rather than padding the options
+   with residues the user deliberately excluded.
+   ------------------------------------------------------------------ */
+const MIN_ACTIVE = 2;
+
+function isActive(code) { return !S.off.includes(code); }
+function activeCodes() { return ALL_CODES.filter(isActive); }
+
+/* Never ask for more wrong answers than the study set can supply. */
+function distractorCount(want = 3) {
+  return Math.max(1, Math.min(want, activeCodes().length - 1));
+}
+
+function toggleCode(code) {
+  if (isActive(code)) {
+    if (activeCodes().length <= MIN_ACTIVE) return false;   // keep enough to play
+    S.off.push(code);
+  } else {
+    S.off = S.off.filter(c => c !== code);
+  }
+  save();
+  return true;
+}
+
+/* Mastery reflects what you are actually studying, so skipping the ones
+   you already know does not leave the number stuck low. */
+function overallMastery() {
+  const act = activeCodes();
+  return act.reduce((t, c) => t + mastery(c), 0) / act.length;
+}
+
+/* ------------------------------------------------------- utilities */
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function sample(arr, n) { return shuffle(arr).slice(0, n); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* Weighted draw: unseen and recently-missed residues come round more
+   often, mastered ones fade into the background. */
+function pickAA(exclude = []) {
+  const act = activeCodes();
+  const pool = act.filter(c =>
+    !exclude.includes(c) && !S.recent.includes(c));
+  const cands = pool.length ? pool : act.filter(c => !exclude.includes(c));
+  if (!cands.length) return act[0];
+
+  const weights = cands.map(c => {
+    const s = stats[c];
+    if (!s || !s.seen) return 3.5;
+    const acc = s.correct / s.seen;
+    return 0.5 + 3 * (1 - acc) + Math.max(0, 4 - s.streak) * 0.45;
+  });
+
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < cands.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return cands[i];
+  }
+  return cands[cands.length - 1];
+}
+
+function noteRecent(code) {
+  S.recent.push(code);
+  if (S.recent.length > 5) S.recent.shift();
+}
+
+/* Distractors: prefer same-class residues, which is where the real
+   confusion lives, then top up from everything else. */
+function distractors(code, n, sameClassBias = 0.65) {
+  const a = aa(code);
+  const act = activeCodes().filter(c => c !== code);
+  const same = act.filter(c => aa(c).cls === a.cls);
+  const other = act.filter(c => aa(c).cls !== a.cls);
+  const out = [];
+  const wantSame = Math.min(same.length, Math.round(n * sameClassBias));
+  out.push(...sample(same, wantSame));
+  out.push(...sample(other, n - out.length));
+  /* Top up from whatever is left. With a small study set one bucket is
+     often empty, and rounding the bias down can otherwise leave none:
+     n=1 at a 0.4 bias asks for 0 same-class and 1 other-class, which
+     yields nothing at all when every residue in play shares a class. */
+  if (out.length < n) {
+    out.push(...sample(act.filter(c => !out.includes(c)), n - out.length));
+  }
+  return out.slice(0, n);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function nameTag(code) {
+  const a = aa(code);
+  return `<b>${esc(a.name)}</b> <span class="dim">${a.three} · ${a.code}</span>`;
+}
+
+/* ------------------------------------------------- mastery chip card
+
+   One shared popup, filled on hover, rather than twenty pre-rendered
+   ones — the structure alone would be twenty extra SVGs in the DOM.
+   ------------------------------------------------------------------ */
+function chipPopHTML(code) {
+  const a = aa(code), cl = CLASSES[a.cls];
+  const s = stats[code] || { seen: 0, correct: 0 };
+  const m = Math.round(mastery(code) * 100);
+  const off = !isActive(code);
+  return `
+    <div class="cp-head" style="--hue:${cl.hue}">
+      <span class="pill">${a.code}</span>
+      <div class="cp-id">
+        <div class="cp-name">${esc(a.name)}</div>
+        <div class="cp-cls">${a.three} · ${esc(cl.label)}</div>
+      </div>
+    </div>
+    <div class="cp-mol">${moleculeSVG(code, { form: S.form, plain: true })}</div>
+    <div class="cp-bar"><span style="width:${m}%"></span></div>
+    <div class="cp-stats">
+      <span><b>${m}%</b> mastered</span>
+      <span>${s.seen ? s.correct + ' of ' + s.seen + ' right' : 'not seen yet'}</span>
+    </div>
+    <div class="cp-act${off ? ' is-off' : ''}">${off
+      ? 'Skipped — click to put it back'
+      : 'Click to leave it out of the games'}</div>`;
+}
+
+function showChipPop(chip) {
+  const pop = document.getElementById('chipPop');
+  const band = document.querySelector('.progress-band');
+  if (!pop || !band) return;
+  pop.innerHTML = chipPopHTML(chip.dataset.chip);
+  pop.hidden = false;
+
+  /* Position under the chip, clamped so it never hangs off the card. */
+  const br = band.getBoundingClientRect(), cr = chip.getBoundingClientRect();
+  const w = pop.offsetWidth;
+  const left = Math.max(10, Math.min(
+    cr.left - br.left + cr.width / 2 - w / 2, br.width - w - 10));
+  pop.style.left = left + 'px';
+  pop.style.top = (cr.bottom - br.top + 9) + 'px';
+}
+
+function hideChipPop() {
+  const pop = document.getElementById('chipPop');
+  if (pop) pop.hidden = true;
+}
+
+/* A short "why" panel shown after every answer. */
+function explainCard(code, extra) {
+  const a = aa(code);
+  const cl = CLASSES[a.cls];
+  return `
+    <div class="explain" style="--hue:${cl.hue}">
+      <div class="ex-head">
+        <span class="pill">${a.code}</span>
+        <div>
+          <div class="ex-name">${esc(a.name)} <span class="dim">(${a.three})</span></div>
+          <div class="ex-cls">${esc(cl.label)}</div>
+        </div>
+      </div>
+      ${extra ? `<div class="ex-extra">${extra}</div>` : ''}
+      <div class="ex-grid">
+        <div><span>Side chain</span>${esc(a.group)}</div>
+        <div><span>Charge at pH 7</span>${chargeLabel(a)}</div>
+        <div><span>Side-chain pKa</span>${a.pKaR ? a.pKaR.toFixed(2) : '—'}</div>
+        <div><span>pI</span>${a.pI.toFixed(2)}</div>
+      </div>
+      <p class="ex-mnem">${esc(a.mnemonic)}</p>
+    </div>`;
+}
+
+/* -------------------------------------------------- question types */
+
+function qStructToName() {
+  const code = pickAA();
+  const opts = shuffle([code, ...distractors(code, distractorCount())]);
+  return {
+    kind: 'mc', code, tag: 'Structure',
+    prompt: 'Which amino acid is this?',
+    svg: moleculeSVG(code, { form: S.form }),
+    choices: opts.map(c => ({ value: c, html: nameTag(c) })),
+    answer: opts.indexOf(code),
+    explainWith: 'The side chain is the coloured part — that is the only thing that differs between the twenty.'
+  };
+}
+
+function qNameToStruct() {
+  const code = pickAA();
+  const a = aa(code);
+  const opts = shuffle([code, ...distractors(code, distractorCount())]);
+  return {
+    kind: 'mc-svg', code, tag: 'Structure',
+    prompt: `Pick the structure of <b>${esc(a.name)}</b> <span class="dim">(${a.three})</span>`,
+    choices: opts.map(c => ({ value: c, svg: moleculeSVG(c, { form: S.form, plain: true }) })),
+    answer: opts.indexOf(code),
+    explainWith: `Look for: ${esc(a.group.toLowerCase())}.`
+  };
+}
+
+/* One-letter codes are the must-know; recalling a full name from a
+   letter, or a three-letter code from a drawing, is a step past that. */
+const CODE_VARIANTS = [
+  { y: HI,  id: 'name2one' },
+  { y: HI,  id: 'three2one' },
+  { y: MED, id: 'struct2three' },
+  { y: MED, id: 'one2name' }
+];
+
+function qCodes() {
+  const code = pickAA();
+  const a = aa(code);
+  const variant = pick(atYield(CODE_VARIANTS)).id;
+
+  if (variant === 'name2one') {
+    return {
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 1, wide: false,
+      prompt: `One-letter code for <b>${esc(a.name)}</b>?`,
+      placeholder: '?',
+      check: v => v.trim().toUpperCase() === a.code,
+      answerText: a.code,
+      explainWith: 'Three-letter code: <b>' + a.three + '</b>'
+    };
+  }
+  if (variant === 'three2one') {
+    return {
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 1, wide: false,
+      prompt: `<b>${a.three}</b> — what is the one-letter code?`,
+      placeholder: '?',
+      check: v => v.trim().toUpperCase() === a.code,
+      answerText: a.code,
+      explainWith: esc(a.name)
+    };
+  }
+  if (variant === 'struct2three') {
+    return {
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 3, wide: false,
+      svg: moleculeSVG(code, { form: S.form }),
+      prompt: 'Three-letter code for this amino acid?',
+      placeholder: 'Xxx',
+      check: v => v.trim().toLowerCase() === a.three.toLowerCase(),
+      answerText: a.three,
+      explainWith: 'One-letter code: <b>' + a.code + '</b>'
+    };
+  }
+  return {
+    kind: 'type', code, tag: 'Abbreviation', maxlen: 20, wide: true,
+    prompt: `Which amino acid is <b>${a.code}</b>?`,
+    placeholder: 'full name',
+    check: v => nameMatches(v, a),
+    answerText: a.name,
+    explainWith: 'Three-letter code: <b>' + a.three + '</b>'
+  };
+}
+
+function qClassify() {
+  const code = pickAA();
+  const a = aa(code);
+  const opts = CLASS_ORDER.slice();
+  return {
+    kind: 'mc', code, tag: 'Class', columns: 1,
+    prompt: `Which class does <b>${esc(a.name)}</b> belong to?`,
+    svg: moleculeSVG(code, { form: S.form }),
+    choices: opts.map(c => ({
+      value: c,
+      html: `<span class="swatch" style="--hue:${CLASSES[c].hue}"></span>${esc(CLASSES[c].label)}`
+    })),
+    answer: opts.indexOf(a.cls),
+    explainWith: esc(CLASSES[a.cls].blurb)
+  };
+}
+
+/* -- property questions ------------------------------------------- */
+
+const FACTS = [
+  { y: HI,  q: 'Which amino acid is the only achiral one?', a: 'G' },
+  { y: HI,  q: 'Which amino acid forms disulfide bridges?', a: 'C' },
+  { y: HI,  q: 'Which amino acid is encoded by the start codon AUG?', a: 'M' },
+  { y: HI,  q: 'Which residue kinks α-helices because its side chain locks the backbone?', a: 'P' },
+  { y: HI,  q: 'Which side chain has a pKa near 6, so it buffers at physiological pH?', a: 'H' },
+  { y: HI,  q: 'Which side chain is the strongest base?', a: 'R' },
+  { y: HI,  q: 'Sickle-cell disease swaps which residue at position 6 of β-globin?', a: 'E' },
+  { y: MED, q: 'Which amino acid is the only secondary amine (an "imino acid")?', a: 'P' },
+  { y: MED, q: 'Which amino acid contributes most to protein absorbance at 280 nm?', a: 'W' },
+  { y: MED, q: 'Which amino acid is the precursor of dopamine, adrenaline and melanin?', a: 'Y' },
+  { y: MED, q: 'Which amino acid is the main excitatory neurotransmitter in the CNS?', a: 'E' },
+  { y: MED, q: 'Which residue is the nucleophile in the serine-protease catalytic triad?', a: 'S' },
+  { y: MED, q: 'Which sulfur-containing amino acid cannot form disulfide bonds?', a: 'M' },
+  { y: MED, q: 'Which amino acid builds up toxically in phenylketonuria (PKU)?', a: 'F' },
+  { y: LOW, q: 'Which is the largest and heaviest amino acid?', a: 'W' }
+];
+
+function propCharge() {
+  const code = pickAA();
+  const a = aa(code);
+  const opts = ['−1', '0 (neutral)', '+1'];
+  return {
+    kind: 'mc', code, tag: 'Charge', columns: 1,
+    prompt: `Net charge on the <b>${esc(a.name)}</b> side chain at pH 7.0?`,
+    choices: opts.map(o => ({ value: o, html: o })),
+    answer: opts.indexOf(chargeLabel(a)),
+    explainWith: (a.pKaR
+      ? `The side-chain pKa is ${a.pKaR.toFixed(2)}, and pH 7 is ${a.pKaR < 7 ? 'above' : 'below'} that, `
+        + `so the group is mostly ${a.pKaR < 7 ? 'deprotonated' : 'protonated'}.`
+        + (a.code === 'H'
+            ? ' His is the near miss: its pKa of 6.0 is just under pH 7, so the ring is only about'
+              + ' 9% protonated there. It is classed as basic for its chemistry, but at pH 7 it is'
+              + ' predominantly neutral — which is exactly what makes it a physiological buffer.'
+            : '')
+      : 'This side chain has no ionisable group, so it stays neutral at every physiological pH.')
+  };
+}
+
+function propPka() {
+  const ion = AAS.filter(x => x.pKaR && isActive(x.code)).map(x => x.code);
+  /* Needs at least two ionisable residues in play to be a real question. */
+  if (ion.length < 2) return propCharge();
+  const code = pick(ion);
+  const a = aa(code);
+  const opts = shuffle([code,
+    ...sample(ion.filter(c => c !== code), distractorCount())]);
+  return {
+    kind: 'mc', code, tag: 'pKa',
+    prompt: `Which side chain has a pKa of about <b>${a.pKaR.toFixed(1)}</b>?`,
+    choices: opts.map(c => ({ value: c, html: nameTag(c) })),
+    answer: opts.indexOf(code),
+    explainWith: 'The seven ionisable side chains, low to high: Asp 3.7 · Glu 4.3 · His 6.0 · Cys 8.2 · Tyr 10.1 · Lys 10.5 · Arg 12.5.'
+  };
+}
+
+function propGroup() {
+  const code = pickAA();
+  const a = aa(code);
+  /* Wrong answers are other groups drawn from the study set only. */
+  const others = shuffle(AAS.filter(x => isActive(x.code) && x.groupKey !== a.groupKey))
+    .filter((x, i, arr) => arr.findIndex(y => y.group === x.group) === i)
+    .slice(0, distractorCount()).map(x => x.group);
+  if (!others.length) return propCharge();
+  const opts = shuffle([a.group, ...others]);
+  return {
+    kind: 'mc', code, tag: 'Functional group', columns: 1,
+    prompt: `Which functional group sits in the <b>${esc(a.name)}</b> side chain?`,
+    choices: opts.map(o => ({ value: o, html: esc(o) })),
+    answer: opts.indexOf(a.group),
+    explainWith: esc(a.note)
+  };
+}
+
+function propClassMember() {
+  const act = activeCodes();
+  const want = distractorCount();
+  /* Only ask about a class that still has a member in play AND enough
+     residues outside it to act as wrong answers. */
+  const usable = CLASS_ORDER.filter(cl =>
+    act.some(c => aa(c).cls === cl) &&
+    act.filter(c => aa(c).cls !== cl).length >= want);
+  if (!usable.length) return propCharge();
+
+  const cls = pick(usable);
+  const code = pick(act.filter(c => aa(c).cls === cls));
+  const out = sample(act.filter(c => aa(c).cls !== cls), want);
+  const opts = shuffle([code, ...out]);
+  return {
+    kind: 'mc', code, tag: 'Class',
+    prompt: `Which of these is <b>${esc(CLASSES[cls].label.toLowerCase())}</b>?`,
+    choices: opts.map(c => ({ value: c, html: nameTag(c) })),
+    answer: opts.indexOf(code),
+    explainWith: esc(CLASSES[cls].blurb)
+  };
+}
+
+/* Some residues share a value (Gly and Val are both pI 5.97). Pick the
+   winner first, then draw the other three from strictly the other side,
+   so a "highest / lowest" question can only have one right answer. */
+function fourWithUniqueExtreme(key, wantMax) {
+  const act = activeCodes();
+  const want = distractorCount();
+  for (const w of shuffle(act)) {
+    const wv = aa(w)[key];
+    const rest = act.filter(c => c !== w &&
+      (wantMax ? aa(c)[key] < wv : aa(c)[key] > wv));
+    if (rest.length >= want) return shuffle([w, ...sample(rest, want)]);
+  }
+  return null;   // every candidate ties; caller falls back
+}
+
+/* No hydropathy question: the Kyte–Doolittle scale is not MCAT content,
+   and its sign disagrees with the polar/nonpolar classification taught
+   in Classify mode for Cys, Trp, Gly and Pro. The values stay on the
+   reference card, where they are context rather than a right answer. */
+
+function propFact() {
+  /* Only ask facts whose answer is still in the study set. */
+  const pool = atYield(FACTS).filter(f => isActive(f.a));
+  if (!pool.length) return propCharge();
+  const f = pick(pool);
+  const code = f.a;
+  const opts = shuffle([code, ...distractors(code, distractorCount(), 0.4)]);
+  return {
+    kind: 'mc', code, tag: 'Biochemistry',
+    prompt: f.q,
+    choices: opts.map(c => ({ value: c, html: nameTag(c) })),
+    answer: opts.indexOf(code),
+    explainWith: esc(aa(code).note)
+  };
+}
+
+/* propFact twice so trivia keeps roughly its old share of the mode. */
+const PROP_QS = [
+  { y: HI,  gen: propCharge },
+  { y: HI,  gen: propPka },
+  { y: HI,  gen: propClassMember },
+  { y: HI,  gen: propFact },
+  { y: HI,  gen: propFact },
+  { y: MED, gen: propGroup }
+];
+
+function qProps() { return pick(atYield(PROP_QS)).gen(); }
+
+/* -- ionisation: charge at a given pH, and pI --------------------- */
+
+const chgClass = q => q > 0 ? 'chg-pos' : q < 0 ? 'chg-neg' : 'chg-zero';
+
+/* Kept clear of every pKa by `gap` so the answer is a clean call and
+   not a coin flip on a residue that is half-titrated at that pH. */
+const PH_CHOICES = [1, 2, 3, 4, 5, 6, 7, 7.4, 8, 9, 10, 11, 12, 13];
+
+function pickPH(code, pool = PH_CHOICES, gap = 0.7) {
+  const ladder = pKaLadder(code);
+  const safe = pool.filter(p => ladder.every(g => Math.abs(p - g.pKa) >= gap));
+  return pick(safe.length ? safe : pool);
+}
+
+/* Group-by-group working, shown after the answer. */
+function ionTable(code, pH) {
+  const rows = pKaLadder(code).map(g => {
+    const above = pH > g.pKa;
+    const q = above ? g.to : g.from;
+    return `<tr>
+      <td>${g.group}</td>
+      <td class="n">${g.pKa.toFixed(2)}</td>
+      <td>pH is ${above ? 'above' : 'below'} it, so ${above ? 'deprotonated' : 'protonated'}</td>
+      <td class="q ${chgClass(q)}">${chargeStr(q)}</td></tr>`;
+  }).join('');
+  const net = netChargeAt(code, pH);
+  return `<div class="tw"><table class="ion-table">
+    <thead><tr><th>Group</th><th class="n">pKa</th><th>At pH ${pH}</th><th class="q">Charge</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="3">Net charge</td>
+      <td class="q ${chgClass(net)}">${chargeStr(net)}</td></tr></tfoot>
+  </table></div>`;
+}
+
+/* Titration ladder: net charge stepping down as each group lets go. */
+function piLadder(code) {
+  const L = pKaLadder(code);
+  const { pI } = computePI(code);
+  let charge = L.reduce((s, g) => s + g.from, 0);
+  const parts = [`<span class="lad-q ${chgClass(charge)}">${chargeStr(charge)}</span>`];
+  L.forEach(g => {
+    parts.push(`<span class="lad-p">${g.pKa.toFixed(2)}</span>`);
+    charge += g.to - g.from;
+    parts.push(`<span class="lad-q ${chgClass(charge)}">${chargeStr(charge)}</span>`);
+  });
+  return `<div class="tw"><div class="ladder">${parts.join('')}</div></div>
+    <p class="lad-note">Net charge as the pH rises. The pI is the midpoint of the two
+    pKa values flanking the <b>0</b>, here <b>pI ${pI.toFixed(2)}</b>.</p>`;
+}
+
+function qChargeAtPH() {
+  const code = pickAA();
+  const a = aa(code);
+  /* At high yield, stay at physiological pH — that is the version the
+     exam asks. Wider pH ranges are the same skill, one step out. */
+  const pH = pickPH(code, yieldCap() === HI ? [7, 7.4] : PH_CHOICES);
+  const opts = [-2, -1, 0, 1, 2];
+  return {
+    kind: 'mc', code, tag: 'Charge at pH', columns: 1,
+    prompt: `What is the <b>net charge</b> on <b>${esc(a.name)}</b> at <b>pH ${pH}</b>?`,
+    choices: opts.map(o => ({ value: o, html: chargeStr(o) })),
+    answer: opts.indexOf(netChargeAt(code, pH)),
+    explainWith: 'Take each ionisable group in turn: above its pKa it has given up its proton.'
+      + ionTable(code, pH)
+  };
+}
+
+const IONISABLE = AAS.filter(x => x.pKaR).map(x => x.code);
+
+function piPair() {
+  const ion = IONISABLE.filter(isActive);
+  if (!ion.length) return qChargeAtPH();   // nothing ionisable left in play
+  const code = pick(ion);
+  const a = aa(code);
+  const L = pKaLadder(code);
+  const { pair } = computePI(code);
+
+  const combos = [];
+  for (let i = 0; i < L.length; i++)
+    for (let j = i + 1; j < L.length; j++) combos.push([L[i], L[j]]);
+
+  const label = p => `${p[0].pKa.toFixed(2)} and ${p[1].pKa.toFixed(2)} ` +
+    `<span class="dim">(${p[0].group} + ${p[1].group})</span>`;
+  const all = shuffle(combos.map(p => ({ key: p[0].pKa + '/' + p[1].pKa, html: label(p) })));
+  all.splice(Math.floor(Math.random() * (all.length + 1)), 0,
+    { key: 'all3', html: `The average of all three <span class="dim">(${L.map(g => g.pKa.toFixed(2)).join(', ')})</span>` });
+
+  const want = pair[0].pKa + '/' + pair[1].pKa;
+  return {
+    kind: 'mc', code, tag: 'pI', columns: 1,
+    prompt: `To get the pI of <b>${esc(a.name)}</b>, which two pKa values do you average?`,
+    choices: all.map(o => ({ value: o.key, html: o.html })),
+    answer: all.findIndex(o => o.key === want),
+    explainWith: 'Never all three, and not always the side chain: you want the two that '
+      + 'bracket the species with no net charge.' + piLadder(code)
+  };
+}
+
+function piEstimate() {
+  const code = pickAA();
+  const a = aa(code);
+  /* Distractors must differ from the answer AND from each other —
+     Gly and Val would otherwise both offer 5.97. */
+  const want = distractorCount();
+  const others = [];
+  for (const x of shuffle(AAS.filter(x => isActive(x.code)))) {
+    if (Math.abs(x.pI - a.pI) <= 0.7) continue;
+    if (others.some(p => Math.abs(p - x.pI) < 0.05)) continue;
+    others.push(x.pI);
+    if (others.length === want) break;
+  }
+  if (!others.length) return qChargeAtPH();   // no separable pI to contrast
+  const opts = shuffle([a.pI, ...others]);
+  return {
+    kind: 'mc', code, tag: 'pI',
+    prompt: `Which is closest to the pI of <b>${esc(a.name)}</b>?`,
+    choices: opts.map(o => ({ value: o, html: o.toFixed(2) })),
+    answer: opts.indexOf(a.pI),
+    explainWith: `${esc(a.name)} is ${a.pKaR ? 'ionisable in the side chain' : 'neutral in the side chain, so only the backbone matters'}.`
+      + piLadder(code)
+  };
+}
+
+function piRank() {
+  const highest = Math.random() < 0.5;
+  const four = fourWithUniqueExtreme('pI', highest);
+  if (!four) return piPair();   // every active residue ties on pI
+  const sorted = four.slice().sort((x, y) => aa(y).pI - aa(x).pI);
+  const code = highest ? sorted[0] : sorted[sorted.length - 1];
+  return {
+    kind: 'mc', code, tag: 'pI',
+    prompt: `Which of these has the <b>${highest ? 'highest' : 'lowest'} pI</b>?`,
+    choices: four.map(c => ({ value: c, html: nameTag(c) })),
+    answer: four.indexOf(code),
+    explainWith: 'A basic side chain drags the pI up, an acidic one drags it down: '
+      + sorted.map(c => `${aa(c).three} ${aa(c).pI.toFixed(2)}`).join(' · ')
+  };
+}
+
+function piElectrophoresis() {
+  const code = pickAA();
+  const a = aa(code);
+  /* Far enough from the pI that the direction is unambiguous, and clear
+     of every pKa so the breakdown table underneath is honest rather
+     than rounding a half-titrated group to a whole charge. */
+  const ladder = pKaLadder(code);
+  const cands = PH_CHOICES.filter(p => Math.abs(p - a.pI) >= 0.8 &&
+    ladder.every(g => Math.abs(p - g.pKa) >= 0.5));
+  const pH = pick(cands.length ? cands
+    : PH_CHOICES.filter(p => Math.abs(p - a.pI) >= 0.8));
+  const positive = pH < a.pI;
+  const opts = [
+    { v: 'cathode', html: 'Toward the <b>cathode</b> <span class="dim">(negative electrode)</span>' },
+    { v: 'anode', html: 'Toward the <b>anode</b> <span class="dim">(positive electrode)</span>' },
+    { v: 'stay', html: 'It stays at the origin' }
+  ];
+  return {
+    kind: 'mc', code, tag: 'Electrophoresis', columns: 1,
+    prompt: `At <b>pH ${pH}</b>, which way does <b>${esc(a.name)}</b> migrate in an electric field?`,
+    choices: opts.map(o => ({ value: o.v, html: o.html })),
+    answer: positive ? 0 : 1,
+    explainWith: `Its pI is <b>${a.pI.toFixed(2)}</b>. The buffer at pH ${pH} is `
+      + `${positive ? 'more acidic than' : 'more basic than'} the pI, so the residue keeps a net `
+      + `<b>${positive ? 'positive' : 'negative'}</b> charge and is pulled to the `
+      + `<b>${positive ? 'cathode' : 'anode'}</b>. Opposites attract; at pH = pI it would not move at all.`
+      + ionTable(code, pH)
+  };
+}
+
+/* piPair is the actual pI skill, so it survives at every level.
+   Ranking four pIs against each other is the rarest of these. */
+const PI_QS = [
+  { y: HI,  gen: piPair },
+  { y: MED, gen: piEstimate },
+  { y: MED, gen: piElectrophoresis },
+  { y: LOW, gen: piRank }
+];
+
+function qIsoelectric() { return pick(atYield(PI_QS)).gen(); }
+
+const GENERATORS = {
+  struct2name: qStructToName,
+  name2struct: qNameToStruct,
+  codes: qCodes,
+  classify: qClassify,
+  props: qProps,
+  charge: qChargeAtPH,
+  isoelectric: qIsoelectric,
+  /* The only place the yield slider applies. The flag is on just for
+     this call, so the sub-generators narrow themselves the way the
+     slider asks; everywhere else they run unfiltered. */
+  gauntlet: () => {
+    yieldActive = true;
+    try {
+      return pick([qStructToName, qNameToStruct, qCodes,
+                   qClassify, qProps, qChargeAtPH, qIsoelectric])();
+    } finally {
+      yieldActive = false;
+    }
+  }
+};
+
+/* ------------------------------------------------------------ views */
+
+const app = () => document.getElementById('app');
+
+function render() {
+  /* The donation footer belongs on the menu only, not over a quiz. */
+  const foot = document.querySelector('.sitefoot');
+  if (foot) foot.hidden = S.screen !== 'home';
+
+  if (S.screen === 'home') return renderHome();
+  if (S.screen === 'quiz') return renderQuiz();
+  if (S.screen === 'results') return renderResults();
+  if (S.screen === 'study') return renderStudy();
+}
+
+function renderHome() {
+  const pct = Math.round(overallMastery() * 100);
+  const act = activeCodes();
+  const seen = act.filter(c => stats[c] && stats[c].seen).length;
+
+  app().innerHTML = `
+    <section class="hero">
+      <h1>Twenty amino acids, committed to memory</h1>
+      <p class="sub">Structures are drawn from real bond geometry. The
+      <span class="sc-word">side chain</span> is highlighted against the shared backbone,
+      because that is the only part that changes.</p>
+    </section>
+
+    <section class="progress-band">
+      <div class="pb-row">
+        <div class="pb-num"><strong>${pct}%</strong><span>mastery</span></div>
+        <div class="pb-grid">
+          ${ALL_CODES.map(c => {
+            const m = mastery(c);
+            const a = aa(c);
+            const off = !isActive(c);
+            return `<button class="chip${off ? ' off' : ''}" data-chip="${c}"
+                      style="--hue:${CLASSES[a.cls].hue};--m:${m}"
+                      aria-pressed="${off ? 'false' : 'true'}"
+                      aria-label="${esc(a.name)}, ${off ? 'skipped' : 'in play'}"
+                      >${c}</button>`;
+          }).join('')}
+        </div>
+        <div class="pb-num"><strong>${seen}/${act.length}</strong><span>encountered</span></div>
+      </div>
+      <div class="pb-foot">
+        <span class="pb-hint">${S.off.length
+          ? `<b>${S.off.length}</b> skipped — <button class="link" id="allOn">study all 20</button>`
+          : 'Click a letter to leave it out of the games'}</span>
+        <button class="link" id="reset">Reset progress</button>
+      </div>
+      <div class="chip-pop" id="chipPop" role="tooltip" hidden></div>
+    </section>
+
+    <section class="modes">
+      ${MODES.map(m => m.id === 'gauntlet' ? `
+        <div class="mode-card has-yield">
+          <button class="mc-go" data-mode="gauntlet">
+            <span class="glyph">${m.glyph}</span>
+            <span class="mc-name">${m.name}</span>
+            <span class="mc-desc">${m.desc}</span>
+          </button>
+          <label class="gy" id="yieldWrap">
+            <span class="ym-label">MCAT yield</span>
+            <input type="range" id="yieldRange" min="0" max="2" step="1"
+                   value="${S.yield}" aria-label="MCAT yield level for the Gauntlet" />
+            <span class="ym-now">${esc(YIELD_LEVELS[S.yield].name)}</span>
+            <span class="ym-pop" role="tooltip">
+              ${YIELD_LEVELS.map((l, i) => `<span class="ymp-row${i === S.yield ? ' on' : ''}"
+                ><b>${esc(l.name)}</b>${esc(l.blurb)}</span>`).join('')}
+            </span>
+          </label>
+        </div>` : `
+        <button class="mode-card" data-mode="${m.id}">
+          <span class="glyph">${m.glyph}</span>
+          <span class="mc-name">${m.name}</span>
+          <span class="mc-desc">${m.desc}</span>
+        </button>`).join('')}
+      <button class="mode-card study" data-mode="study">
+        <span class="glyph">☰</span>
+        <span class="mc-name">Reference table</span>
+        <span class="mc-desc">All twenty side by side, with every property. Study first, then drill.</span>
+      </button>
+    </section>
+
+    ${S.best ? `<p class="footnote">Best gauntlet score: <b>${S.best}</b></p>` : ''}
+  `;
+
+  app().querySelectorAll('[data-mode]').forEach(b => {
+    b.onclick = () => {
+      const m = b.dataset.mode;
+      if (m === 'study') { S.screen = 'study'; render(); }
+      else startRound(m);
+    };
+  });
+  /* Patch the label in place rather than re-rendering — a full render
+     would swap out the range element and kill an in-progress drag.
+     The descriptions live in a hover card so the row itself stays quiet. */
+  const range = document.getElementById('yieldRange');
+  if (range) range.oninput = () => {
+    S.yield = +range.value;
+    save();
+    document.querySelector('.ym-now').textContent = YIELD_LEVELS[S.yield].name;
+    app().querySelectorAll('.ymp-row').forEach((row, i) =>
+      row.classList.toggle('on', i === S.yield));
+  };
+
+  /* Chips: hover for the card, click to drop the residue from the games. */
+  app().querySelectorAll('[data-chip]').forEach(chip => {
+    chip.onmouseenter = () => showChipPop(chip);
+    chip.onfocus = () => showChipPop(chip);
+    chip.onmouseleave = hideChipPop;
+    chip.onblur = hideChipPop;
+    chip.onclick = () => {
+      if (!toggleCode(chip.dataset.chip)) {
+        /* At the floor — say so instead of silently ignoring the click. */
+        const pop = document.getElementById('chipPop');
+        if (pop && !pop.hidden) {
+          const act = pop.querySelector('.cp-act');
+          if (act) {
+            act.textContent = `Keep at least ${MIN_ACTIVE} in play`;
+            act.classList.add('is-warn');
+          }
+        }
+        return;
+      }
+      render();
+      /* Re-open the card on the same chip so the new state is visible. */
+      const again = app().querySelector(`[data-chip="${chip.dataset.chip}"]`);
+      if (again) showChipPop(again);
+    };
+  });
+
+  const allOn = document.getElementById('allOn');
+  if (allOn) allOn.onclick = () => { S.off = []; save(); render(); };
+
+  const rst = document.getElementById('reset');
+  if (rst) rst.onclick = () => {
+    if (confirm('Clear all progress and start over?')) {
+      stats = {}; S.best = 0; save(); render();
+    }
+  };
+}
+
+function startRound(mode) {
+  S.mode = mode;
+  S.screen = 'quiz';
+  S.idx = 0;
+  S.score = 0;
+  S.streak = 0;
+  S.missed = [];
+  S.recent = [];
+  if (mode === 'gauntlet') {
+    S.timeLeft = GAUNTLET_SECONDS;
+    clearInterval(S.timer);
+    S.timer = setInterval(tick, 1000);
+  }
+  nextQuestion();
+}
+
+function tick() {
+  S.timeLeft--;
+  const el = document.getElementById('clock');
+  if (el) el.textContent = S.timeLeft + 's';
+  if (S.timeLeft <= 0) {
+    clearInterval(S.timer);
+    S.timer = null;
+    if (S.score > S.best) { S.best = S.score; save(); }
+    S.screen = 'results';
+    render();
+  }
+}
+
+function nextQuestion() {
+  S.q = GENERATORS[S.mode]();
+  noteRecent(S.q.code);
+  S.answered = false;
+  render();
+}
+
+function renderQuiz() {
+  const q = S.q;
+  const timed = S.mode === 'gauntlet';
+  const total = timed ? '∞' : ROUND_LEN;
+
+  app().innerHTML = `
+    <div class="quizbar">
+      <button class="link" id="quit">← Menu</button>
+      <div class="qb-mid">
+        <span class="tag">${q.tag}</span>
+        <span class="dim">${timed ? `Q${S.idx + 1}` : `${S.idx + 1} / ${total}`}</span>
+      </div>
+      <div class="qb-right">
+        ${timed ? `<span class="clock" id="clock">${S.timeLeft}s</span>` : ''}
+        <span class="score">${S.score}</span>
+        ${S.streak > 1 ? `<span class="streak">🔥${S.streak}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="prompt">${q.prompt}</p>
+      ${q.svg ? `<div class="stage">${q.svg}</div>` : ''}
+      <div id="answers"></div>
+      <div id="feedback"></div>
+    </div>
+  `;
+
+  document.getElementById('quit').onclick = () => {
+    clearInterval(S.timer); S.timer = null;
+    S.screen = 'home'; render();
+  };
+
+  const box = document.getElementById('answers');
+
+  if (q.kind === 'type') {
+    box.innerHTML = `
+      <form class="typebox" id="tf" autocomplete="off">
+        <input id="tin" class="${q.wide ? 'wide' : 'narrow'}"
+               maxlength="${q.maxlen}" placeholder="${esc(q.placeholder)}"
+               spellcheck="false" autocapitalize="off" />
+        <button type="submit" class="btn">Check</button>
+      </form>`;
+    const input = document.getElementById('tin');
+    input.focus();
+    document.getElementById('tf').onsubmit = e => {
+      e.preventDefault();
+      if (S.answered) { advance(); return; }
+      submitTyped(input.value);
+    };
+    if (q.maxlen === 1) {
+      input.oninput = () => { if (input.value.length === 1) submitTyped(input.value); };
+    }
+  } else if (q.kind === 'mc-svg') {
+    box.innerHTML = `<div class="grid-svg">` + q.choices.map((c, i) =>
+      `<button class="opt-svg" data-i="${i}"><span class="num">${i + 1}</span>${c.svg}</button>`
+    ).join('') + `</div>`;
+    box.querySelectorAll('button').forEach(b =>
+      b.onclick = () => choose(+b.dataset.i));
+  } else {
+    box.innerHTML = `<div class="opts ${q.columns === 1 ? 'one' : ''}">` +
+      q.choices.map((c, i) =>
+        `<button class="opt" data-i="${i}"><span class="num">${i + 1}</span><span class="opt-body">${c.html}</span></button>`
+      ).join('') + `</div>`;
+    box.querySelectorAll('button').forEach(b =>
+      b.onclick = () => choose(+b.dataset.i));
+  }
+}
+
+function submitTyped(value) {
+  const q = S.q;
+  const ok = q.check(value);
+  S.answered = true;
+  record(q.code, ok);
+  finishAnswer(ok, ok ? '' : `You wrote “${esc(value || '—')}”. The answer is <b>${esc(q.answerText)}</b>.`);
+  const input = document.getElementById('tin');
+  if (input) {
+    input.classList.add(ok ? 'good' : 'bad');
+    input.disabled = true;
+  }
+}
+
+function choose(i) {
+  if (S.answered) return;
+  S.answered = true;
+  const q = S.q;
+  const ok = i === q.answer;
+  record(q.code, ok);
+
+  const box = document.getElementById('answers');
+  box.querySelectorAll('button').forEach((b, j) => {
+    b.disabled = true;
+    if (j === q.answer) b.classList.add('good');
+    else if (j === i) b.classList.add('bad');
+  });
+  finishAnswer(ok, '');
+}
+
+function finishAnswer(ok, extraMsg) {
+  if (ok) { S.score++; S.streak++; }
+  else { S.streak = 0; S.missed.push(S.q.code); }
+
+  const fb = document.getElementById('feedback');
+  fb.innerHTML = `
+    <div class="verdict ${ok ? 'ok' : 'no'}">
+      <span>${ok ? 'Correct' : 'Not quite'}</span>
+      ${extraMsg ? `<em>${extraMsg}</em>` : ''}
+    </div>
+    ${explainCard(S.q.code, S.q.explainWith)}
+    <button class="btn primary wide-btn" id="next">
+      ${(S.mode !== 'gauntlet' && S.idx + 1 >= ROUND_LEN) ? 'See results' : 'Next'}
+      <span class="kbd">↵</span>
+    </button>`;
+  document.getElementById('next').onclick = advance;
+  document.getElementById('next').focus();
+  fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function advance() {
+  S.idx++;
+  if (S.mode !== 'gauntlet' && S.idx >= ROUND_LEN) {
+    S.screen = 'results';
+    render();
+    return;
+  }
+  nextQuestion();
+}
+
+function renderResults() {
+  const asked = S.mode === 'gauntlet' ? S.idx : ROUND_LEN;
+  const pct = asked ? Math.round(S.score / asked * 100) : 0;
+  const missedUnique = [...new Set(S.missed)];
+  const modeName = (MODES.find(m => m.id === S.mode) || {}).name || '';
+
+  app().innerHTML = `
+    <div class="results">
+      <p class="dim">${esc(modeName)}</p>
+      <div class="big-score">${S.score}<span>/ ${asked}</span></div>
+      <div class="ring">${pct}% correct</div>
+      ${S.mode === 'gauntlet' && S.score >= S.best && S.score > 0
+        ? `<p class="best">New best.</p>` : ''}
+
+      ${missedUnique.length ? `
+        <h3>Worth another look</h3>
+        <div class="missed">
+          ${missedUnique.map(c => `
+            <div class="missed-card" style="--hue:${CLASSES[aa(c).cls].hue}">
+              <div class="ms-mol">${moleculeSVG(c, { form: S.form, plain: true })}</div>
+              <div class="ms-body">
+                <b>${esc(aa(c).name)}</b>
+                <span class="dim">${aa(c).three} · ${aa(c).code}</span>
+                <span class="ms-note">${esc(aa(c).mnemonic)}</span>
+              </div>
+            </div>`).join('')}
+        </div>` : `<p class="clean">Clean sweep — nothing missed.</p>`}
+
+      <div class="res-actions">
+        <button class="btn primary" id="again">Go again</button>
+        <button class="btn" id="home">Menu</button>
+      </div>
+    </div>`;
+
+  document.getElementById('again').onclick = () => startRound(S.mode);
+  document.getElementById('home').onclick = () => { S.screen = 'home'; render(); };
+}
+
+/* ------------------------------------------------------------ study */
+
+let studyFilter = 'all';
+
+function renderStudy() {
+  const list = studyFilter === 'all'
+    ? AAS
+    : AAS.filter(a => a.cls === studyFilter);
+
+  app().innerHTML = `
+    <div class="quizbar">
+      <button class="link" id="quit">← Menu</button>
+      <div class="qb-mid"><span class="tag">Reference</span></div>
+      <div class="qb-right">
+        <button class="toggle" id="formtog" title="Switch between the neutral form and the form at pH 7">
+          ${S.form === 'ion' ? 'pH 7 (zwitterion)' : 'Neutral form'}
+        </button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="fbtn ${studyFilter === 'all' ? 'on' : ''}" data-f="all">All 20</button>
+      ${CLASS_ORDER.map(c => `
+        <button class="fbtn ${studyFilter === c ? 'on' : ''}" data-f="${c}"
+                style="--hue:${CLASSES[c].hue}">
+          <span class="swatch" style="--hue:${CLASSES[c].hue}"></span>${esc(CLASSES[c].short)}
+        </button>`).join('')}
+    </div>
+
+    <div class="study-grid">
+      ${list.map(a => {
+        const cl = CLASSES[a.cls];
+        const m = mastery(a.code);
+        return `
+        <article class="aacard" style="--hue:${cl.hue}">
+          <header>
+            <span class="pill">${a.code}</span>
+            <div class="ac-title">
+              <h3>${esc(a.name)}</h3>
+              <span class="dim">${a.three}${a.alt.length ? ' · ' + esc(a.alt[0]) : ''}</span>
+            </div>
+            <span class="mastery" title="${Math.round(m * 100)}% mastered">
+              <span style="width:${m * 100}%"></span>
+            </span>
+          </header>
+          <div class="ac-mol">${moleculeSVG(a.code, { form: S.form })}</div>
+          <div class="ac-cls">${esc(cl.label)}</div>
+          <dl class="ac-props">
+            <div><dt>Side chain</dt><dd>${esc(a.group)}</dd></div>
+            <div><dt>Charge (pH 7)</dt><dd>${chargeLabel(a)}</dd></div>
+            <div><dt>Side-chain pKa</dt><dd>${a.pKaR ? a.pKaR.toFixed(2) : '—'}</dd></div>
+            <div><dt>pI</dt><dd>${a.pI.toFixed(2)}</dd></div>
+            <div><dt>M<sub>r</sub></dt><dd>${a.mw.toFixed(2)}</dd></div>
+            <div><dt>Hydropathy</dt><dd>${a.hydropathy > 0 ? '+' : ''}${a.hydropathy}</dd></div>
+            <div><dt>Diet</dt><dd>${essentialLabel(a)}</dd></div>
+            <div><dt>Codons</dt><dd class="codons">${a.codons.join(' ')}</dd></div>
+          </dl>
+          <p class="ac-mnem">${esc(a.mnemonic)}</p>
+          <p class="ac-note">${esc(a.note)}</p>
+        </article>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('quit').onclick = () => { S.screen = 'home'; render(); };
+  document.getElementById('formtog').onclick = () => {
+    S.form = S.form === 'ion' ? 'neutral' : 'ion';
+    save(); render();
+  };
+  app().querySelectorAll('[data-f]').forEach(b =>
+    b.onclick = () => { studyFilter = b.dataset.f; render(); });
+}
+
+/* -------------------------------------------------------- keyboard */
+
+document.addEventListener('keydown', e => {
+  if (S.screen !== 'quiz') return;
+  const typing = document.activeElement &&
+    document.activeElement.tagName === 'INPUT';
+
+  if (e.key === 'Enter' && S.answered) {
+    e.preventDefault();
+    advance();
+    return;
+  }
+  if (typing || S.answered) return;
+
+  const n = parseInt(e.key, 10);
+  if (n >= 1 && n <= 9) {
+    const btns = document.querySelectorAll('#answers button[data-i]');
+    if (btns[n - 1]) { e.preventDefault(); btns[n - 1].click(); }
+  }
+});
+
+/* ------------------------------------------------------------- boot */
+
+load();
+render();
+</script>
+</body>
+</html>
