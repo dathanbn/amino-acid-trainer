@@ -27,6 +27,11 @@ const safe = js => js.replace(/<\/script/gi, '<\\/script');
 
 let html = read('index.html');
 
+/* Analytics only makes sense when the page can phone home. The offline
+   bundle is explicitly for studying with no connection, so drop it — the
+   live index.html is untouched; only this derived copy loses it. */
+html = html.replace(/\s*<!-- analytics:start[\s\S]*?analytics:end -->\n?/, '\n');
+
 // 1. inline the stylesheet
 const cssTag = /<link rel="stylesheet" href="css\/styles\.css">/;
 if (!cssTag.test(html)) throw new Error('stylesheet <link> not found in index.html');

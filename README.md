@@ -6,6 +6,12 @@ MCAT.
 
 **Play it: https://dathanbn.github.io/amino-acid-trainer/**
 
+Uses [GoatCounter](https://www.goatcounter.com/) for anonymous page-view
+counts — no cookies, no personal data, no cross-site tracking, no consent
+banner needed. Your quiz progress and study-set choices stay in your
+browser's local storage and are never sent anywhere. See
+[Analytics](#analytics) below.
+
 ---
 
 ## Modes
@@ -159,6 +165,26 @@ serve.js        local preview server (development only)
 
 To change round length or the gauntlet clock, edit `ROUND_LEN` and
 `GAUNTLET_SECONDS` at the top of `js/app.js`.
+
+---
+
+## Analytics
+
+[GoatCounter](https://www.goatcounter.com/) counts page views so it's
+possible to see how many people are using the site. That's all it does — no
+cookies, no localStorage, no fingerprinting, no personal data, no ads, no
+resale of data. Because it collects nothing identifying, no cookie-consent
+banner is required.
+
+The dashboard lives at `https://dathanbn.goatcounter.com` — log in there to
+see visits, referrers (useful for seeing how much traffic came from a given
+Reddit post), and rough browser/OS breakdowns.
+
+The tracking script is deliberately **left out of the offline bundle**
+(`offline/amino-acid-trainer.html`) — `build.js` strips it automatically —
+since that file is meant for studying with no connection at all, and a
+script that phones home has no place in it. `verify.js` checks this stays
+true on every build.
 
 ---
 

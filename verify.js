@@ -14,7 +14,8 @@
      7  charge7 in the data agrees with the pKa model
      8  every question generator, at every yield level
      9  no out-of-scope material reachable from a game
-    10  offline bundle is in sync with the source
+    10  analytics: real site code, and stripped from the offline bundle
+    11  offline bundle is in sync with the source
    ------------------------------------------------------------------ */
 
 const fs = require('fs');
@@ -391,7 +392,28 @@ const floor = run(`(function(){
 floor.blocked ? pass('cannot drop below ' + run('MIN_ACTIVE') + ' residues in play')
               : fail('the minimum study-set size is not enforced');
 
-/* --------------------------------------------- 10  bundle */
+/* --------------------------------------------- 10  analytics */
+
+head('Analytics');
+
+const indexHtml = read('index.html');
+const gcMatches = [...indexHtml.matchAll(/data-goatcounter="https:\/\/([\w-]+)\.goatcounter\.com\/count"/g)];
+if (gcMatches.length !== 1) {
+  fail('expected exactly one GoatCounter script tag in index.html, found ' + gcMatches.length);
+} else if (gcMatches[0][1] === 'SITECODE') {
+  fail('index.html still has the SITECODE placeholder — swap it for the real ' +
+       'GoatCounter site code before shipping (https://www.goatcounter.com/ → your site → Settings)');
+} else {
+  pass('index.html points at a real GoatCounter site: ' + gcMatches[0][1] + '.goatcounter.com');
+}
+
+const offlineHtml = fs.existsSync(path.join(ROOT, 'offline/amino-acid-trainer.html'))
+  ? fs.readFileSync(path.join(ROOT, 'offline/amino-acid-trainer.html'), 'utf8') : '';
+/goatcounter/i.test(offlineHtml)
+  ? fail('the offline bundle still phones home — analytics should be stripped from it')
+  : pass('offline bundle has zero analytics — nothing phones home when studying offline');
+
+/* --------------------------------------------- 11  bundle */
 
 head('Offline bundle');
 try {

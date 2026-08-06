@@ -45,7 +45,9 @@
 
   <noscript>
     <p class="noscript">This trainer draws every structure in your browser, so it
-    needs JavaScript switched on. No data leaves your device either way.</p>
+    needs JavaScript switched on. Your answers and progress never leave your
+    device either way — the only thing that does is an anonymous, cookie-free
+    page-view count.</p>
   </noscript>
 
   <main id="app"></main>
@@ -61,5 +63,15 @@
 <script src="js/data.js"></script>
 <script src="js/chem.js"></script>
 <script src="js/app.js"></script>
+
+<!-- analytics:start
+     GoatCounter: counts page views only. No cookies, no localStorage, no
+     personal data, no cross-site tracking — so no consent banner is needed.
+     Stripped from the offline bundle by build.js, since that copy is for
+     studying with no connection and phoning home there would be pointless.
+     Dashboard: https://dathanbn.goatcounter.com -->
+<script data-goatcounter="https://dathanbn.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
+<!-- analytics:end -->
 </body>
 </html>
