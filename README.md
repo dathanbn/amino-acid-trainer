@@ -1,13 +1,10 @@
 # Amino Acid Trainer
 
-A free browser study game for the twenty standard amino acids — structures,
+A free browser study game for the twenty standard amino acids. Tests structures,
 abbreviations, side-chain classes, charge at any pH, and pI. Built for the
-MCAT. No install, no account, no tracking.
+MCAT.
 
-**Play it: https://YOUR-USERNAME.github.io/amino-acid-trainer/**
-
-> Replace `YOUR-USERNAME` above once GitHub Pages is switched on. See
-> [Hosting](#hosting-on-github-pages).
+**Play it: https://dathanbn.github.io/amino-acid-trainer/**
 
 ---
 
