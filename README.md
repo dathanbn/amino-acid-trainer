@@ -176,7 +176,7 @@ cookies, no localStorage, no fingerprinting, no personal data, no ads, no
 resale of data. Because it collects nothing identifying, no cookie-consent
 banner is required.
 
-The dashboard lives at `https://dathanbn.goatcounter.com` — log in there to
+The dashboard lives at `https://amino-acid-trainer.goatcounter.com` — log in there to
 see visits, referrers (useful for seeing how much traffic came from a given
 Reddit post), and rough browser/OS breakdowns.
 
