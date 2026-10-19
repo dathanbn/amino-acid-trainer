@@ -9,39 +9,41 @@ const CLASSES = {
     id: 'aliphatic',
     label: 'Nonpolar, aliphatic',
     short: 'Nonpolar',
-    hue: 200,
+    cat: 7,
     blurb: 'Greasy hydrocarbon side chains. Cluster in the protein core, driven together by the hydrophobic effect.'
   },
   aromatic: {
     id: 'aromatic',
     label: 'Aromatic',
     short: 'Aromatic',
-    hue: 272,
+    cat: 5,
     blurb: 'Bulky ring side chains. Largely hydrophobic; responsible for protein absorbance at 280 nm (Trp ≫ Tyr > Phe).'
   },
   polar: {
     id: 'polar',
     label: 'Polar, uncharged',
     short: 'Polar',
-    hue: 158,
+    cat: 3,
     blurb: 'Neutral at pH 7 but hydrogen-bonding. Usually found on the solvent-exposed surface.'
   },
   acidic: {
     id: 'acidic',
     label: 'Negatively charged (acidic)',
     short: 'Acidic',
-    hue: 8,
+    cat: 8,
     blurb: 'Carboxylate side chains, fully deprotonated and −1 at pH 7.'
   },
   basic: {
     id: 'basic',
     label: 'Positively charged (basic)',
     short: 'Basic',
-    hue: 38,
+    cat: 4,
     blurb: 'Protonated and positive at pH 7 (His only partially — its pKa sits right at physiological pH).'
   }
 };
 
+/* cat: which --sd-cat-N token stands for the class. It is always shown
+   beside the class name or the residue's letter, never on its own. */
 const CLASS_ORDER = ['aliphatic', 'aromatic', 'polar', 'acidic', 'basic'];
 
 /* essential: true | false | 'conditional'
@@ -52,7 +54,7 @@ const CLASS_ORDER = ['aliphatic', 'aromatic', 'polar', 'acidic', 'basic'];
 const AAS = [
   {
     code: 'G', three: 'Gly', name: 'Glycine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 5.97, mw: 75.07, essential: false, hydropathy: -0.4,
     group: 'Hydrogen (no side chain)', groupKey: 'none',
     codons: ['GGU', 'GGC', 'GGA', 'GGG'],
@@ -61,7 +63,7 @@ const AAS = [
   },
   {
     code: 'A', three: 'Ala', name: 'Alanine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 6.01, mw: 89.09, essential: false, hydropathy: 1.8,
     group: 'Methyl', groupKey: 'alkyl',
     codons: ['GCU', 'GCC', 'GCA', 'GCG'],
@@ -70,7 +72,7 @@ const AAS = [
   },
   {
     code: 'V', three: 'Val', name: 'Valine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 5.97, mw: 117.15, essential: true, hydropathy: 4.2,
     group: 'Isopropyl (branched alkyl)', groupKey: 'alkyl',
     codons: ['GUU', 'GUC', 'GUA', 'GUG'],
@@ -79,7 +81,7 @@ const AAS = [
   },
   {
     code: 'L', three: 'Leu', name: 'Leucine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 5.98, mw: 131.17, essential: true, hydropathy: 3.8,
     group: 'Isobutyl (branched alkyl)', groupKey: 'alkyl',
     codons: ['UUA', 'UUG', 'CUU', 'CUC', 'CUA', 'CUG'],
@@ -88,7 +90,7 @@ const AAS = [
   },
   {
     code: 'I', three: 'Ile', name: 'Isoleucine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 6.02, mw: 131.17, essential: true, hydropathy: 4.5,
     group: 'sec-Butyl (branched alkyl)', groupKey: 'alkyl',
     codons: ['AUU', 'AUC', 'AUA'],
@@ -97,7 +99,7 @@ const AAS = [
   },
   {
     code: 'P', three: 'Pro', name: 'Proline', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 6.48, mw: 115.13, essential: false, hydropathy: -1.6,
     group: 'Pyrrolidine ring (secondary amine)', groupKey: 'ring-n',
     codons: ['CCU', 'CCC', 'CCA', 'CCG'],
@@ -106,7 +108,7 @@ const AAS = [
   },
   {
     code: 'M', three: 'Met', name: 'Methionine', alt: [],
-    cls: 'aliphatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aliphatic', charge7: 0,
     pKaR: null, pI: 5.74, mw: 149.21, essential: true, hydropathy: 1.9,
     group: 'Thioether (S–CH₃)', groupKey: 'sulfur',
     codons: ['AUG'],
@@ -115,7 +117,7 @@ const AAS = [
   },
   {
     code: 'F', three: 'Phe', name: 'Phenylalanine', alt: [],
-    cls: 'aromatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aromatic', charge7: 0,
     pKaR: null, pI: 5.48, mw: 165.19, essential: true, hydropathy: 2.8,
     group: 'Phenyl (benzene ring)', groupKey: 'aromatic',
     codons: ['UUU', 'UUC'],
@@ -124,7 +126,7 @@ const AAS = [
   },
   {
     code: 'Y', three: 'Tyr', name: 'Tyrosine', alt: [],
-    cls: 'aromatic', polarity: 'polar', charge7: 0,
+    cls: 'aromatic', charge7: 0,
     pKaR: 10.07, pI: 5.66, mw: 181.19, essential: false, hydropathy: -1.3,
     group: 'Phenol (aromatic –OH)', groupKey: 'hydroxyl',
     codons: ['UAU', 'UAC'],
@@ -133,7 +135,7 @@ const AAS = [
   },
   {
     code: 'W', three: 'Trp', name: 'Tryptophan', alt: [],
-    cls: 'aromatic', polarity: 'nonpolar', charge7: 0,
+    cls: 'aromatic', charge7: 0,
     pKaR: null, pI: 5.89, mw: 204.23, essential: true, hydropathy: -0.9,
     group: 'Indole (bicyclic)', groupKey: 'aromatic',
     codons: ['UGG'],
@@ -142,7 +144,7 @@ const AAS = [
   },
   {
     code: 'S', three: 'Ser', name: 'Serine', alt: [],
-    cls: 'polar', polarity: 'polar', charge7: 0,
+    cls: 'polar', charge7: 0,
     pKaR: null, pI: 5.68, mw: 105.09, essential: false, hydropathy: -0.8,
     group: 'Hydroxyl (primary alcohol)', groupKey: 'hydroxyl',
     codons: ['UCU', 'UCC', 'UCA', 'UCG', 'AGU', 'AGC'],
@@ -151,7 +153,7 @@ const AAS = [
   },
   {
     code: 'T', three: 'Thr', name: 'Threonine', alt: [],
-    cls: 'polar', polarity: 'polar', charge7: 0,
+    cls: 'polar', charge7: 0,
     pKaR: null, pI: 5.87, mw: 119.12, essential: true, hydropathy: -0.7,
     group: 'Hydroxyl (secondary alcohol)', groupKey: 'hydroxyl',
     codons: ['ACU', 'ACC', 'ACA', 'ACG'],
@@ -160,7 +162,7 @@ const AAS = [
   },
   {
     code: 'C', three: 'Cys', name: 'Cysteine', alt: [],
-    cls: 'polar', polarity: 'polar', charge7: 0,
+    cls: 'polar', charge7: 0,
     pKaR: 8.18, pI: 5.07, mw: 121.16, essential: false, hydropathy: 2.5,
     group: 'Thiol / sulfhydryl (–SH)', groupKey: 'sulfur',
     codons: ['UGU', 'UGC'],
@@ -169,7 +171,7 @@ const AAS = [
   },
   {
     code: 'N', three: 'Asn', name: 'Asparagine', alt: [],
-    cls: 'polar', polarity: 'polar', charge7: 0,
+    cls: 'polar', charge7: 0,
     pKaR: null, pI: 5.41, mw: 132.12, essential: false, hydropathy: -3.5,
     group: 'Amide (carboxamide)', groupKey: 'amide',
     codons: ['AAU', 'AAC'],
@@ -178,7 +180,7 @@ const AAS = [
   },
   {
     code: 'Q', three: 'Gln', name: 'Glutamine', alt: [],
-    cls: 'polar', polarity: 'polar', charge7: 0,
+    cls: 'polar', charge7: 0,
     pKaR: null, pI: 5.65, mw: 146.15, essential: false, hydropathy: -3.5,
     group: 'Amide (carboxamide)', groupKey: 'amide',
     codons: ['CAA', 'CAG'],
@@ -187,7 +189,7 @@ const AAS = [
   },
   {
     code: 'D', three: 'Asp', name: 'Aspartate', alt: ['Aspartic acid'],
-    cls: 'acidic', polarity: 'charged', charge7: -1,
+    cls: 'acidic', charge7: -1,
     pKaR: 3.65, pI: 2.77, mw: 133.10, essential: false, hydropathy: -3.5,
     group: 'Carboxyl / carboxylate (–COO⁻)', groupKey: 'carboxyl',
     codons: ['GAU', 'GAC'],
@@ -196,7 +198,7 @@ const AAS = [
   },
   {
     code: 'E', three: 'Glu', name: 'Glutamate', alt: ['Glutamic acid'],
-    cls: 'acidic', polarity: 'charged', charge7: -1,
+    cls: 'acidic', charge7: -1,
     pKaR: 4.25, pI: 3.22, mw: 147.13, essential: false, hydropathy: -3.5,
     group: 'Carboxyl / carboxylate (–COO⁻)', groupKey: 'carboxyl',
     codons: ['GAA', 'GAG'],
@@ -205,7 +207,7 @@ const AAS = [
   },
   {
     code: 'K', three: 'Lys', name: 'Lysine', alt: [],
-    cls: 'basic', polarity: 'charged', charge7: 1,
+    cls: 'basic', charge7: 1,
     pKaR: 10.53, pI: 9.74, mw: 146.19, essential: true, hydropathy: -3.9,
     group: 'Primary amine / ammonium (–NH₃⁺)', groupKey: 'amine',
     codons: ['AAA', 'AAG'],
@@ -214,7 +216,7 @@ const AAS = [
   },
   {
     code: 'R', three: 'Arg', name: 'Arginine', alt: [],
-    cls: 'basic', polarity: 'charged', charge7: 1,
+    cls: 'basic', charge7: 1,
     pKaR: 12.48, pI: 10.76, mw: 174.20, essential: 'conditional', hydropathy: -4.5,
     group: 'Guanidinium', groupKey: 'guanidinium',
     codons: ['CGU', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG'],
@@ -227,7 +229,7 @@ const AAS = [
        protonated by Henderson–Hasselbalch). His is still classed as
        basic — that is about the group's chemistry, not its state here. */
     code: 'H', three: 'His', name: 'Histidine', alt: [],
-    cls: 'basic', polarity: 'charged', charge7: 0,
+    cls: 'basic', charge7: 0,
     pKaR: 6.00, pI: 7.59, mw: 155.15, essential: true, hydropathy: -3.2,
     group: 'Imidazole', groupKey: 'ring-n',
     codons: ['CAU', 'CAC'],
@@ -241,6 +243,13 @@ const BY_CODE = Object.fromEntries(AAS.map(a => [a.code, a]));
 const ALL_CODES = AAS.map(a => a.code);
 
 function aa(code) { return BY_CODE[code]; }
+
+/* HTML-escape for anything that reaches innerHTML. data.js loads first,
+   so chem.js and app.js share this one. */
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 /* Accepted spellings when the player types a full name */
 function nameMatches(input, a) {
@@ -290,13 +299,13 @@ function pKaLadder(code) {
   const a = BY_CODE[code];
   const [pK1, pK2] = BACKBONE_PKA[code];
   const rungs = [
-    { pKa: pK1, from: 0, to: -1, group: 'α-carboxyl', label: '–COOH → –COO⁻' },
-    { pKa: pK2, from: 1, to: 0, group: 'α-amino', label: '–NH₃⁺ → –NH₂' }
+    { pKa: pK1, from: 0, to: -1, group: 'α-carboxyl' },
+    { pKa: pK2, from: 1, to: 0, group: 'α-amino' }
   ];
   if (a.pKaR) {
     rungs.push(R_BASIC.includes(code)
-      ? { pKa: a.pKaR, from: 1, to: 0, group: 'side chain', label: 'protonated → neutral', kind: 'base' }
-      : { pKa: a.pKaR, from: 0, to: -1, group: 'side chain', label: 'neutral → deprotonated', kind: 'acid' });
+      ? { pKa: a.pKaR, from: 1, to: 0, group: 'side chain' }
+      : { pKa: a.pKaR, from: 0, to: -1, group: 'side chain' });
   }
   return rungs.sort((x, y) => x.pKa - y.pKa);
 }

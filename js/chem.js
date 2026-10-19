@@ -66,7 +66,7 @@ function Mol() {
 
 /* A regular n-ring hanging off `ipso`, growing away from `from`.
    `ids` holds the n-1 new atom ids in ring order.                   */
-function attachRing(M, ipso, from, n, ids, o = {}, cw = true) {
+function attachRing(M, ipso, from, n, ids, o = {}) {
   const P = M.get(ipso), F = M.get(from);
   let vx = P.x - F.x, vy = P.y - F.y;
   const L = Math.hypot(vx, vy); vx /= L; vy /= L;
@@ -74,7 +74,7 @@ function attachRing(M, ipso, from, n, ids, o = {}, cw = true) {
   const R = 0.5 / Math.sin(Math.PI / n);
   const cx = P.x + vx * R, cy = P.y + vy * R;
   const a0 = Math.atan2(P.y - cy, P.x - cx);
-  const step = (cw ? 1 : -1) * 2 * Math.PI / n;
+  const step = 2 * Math.PI / n;
 
   const verts = [ipso];
   ids.forEach((id, i) => {
@@ -360,11 +360,10 @@ function textX(at) {
   return at.x;
 }
 
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
-/* Returns an <svg> string. opts: { form: 'neutral'|'ion', plain: bool } */
+/* Returns an <svg> string.
+   opts: { form: 'neutral'|'ion', label: accessible name (defaults to the
+   residue's name; a quiz passes something that does not give it away) } */
 function moleculeSVG(code, opts = {}) {
   const iso = opts.form === 'ion';
   const M = buildAA(code, iso);
@@ -399,17 +398,17 @@ function moleculeSVG(code, opts = {}) {
         const s = ((bd.inner[0] - mx) * px + (bd.inner[1] - my) * py) >= 0 ? 1 : -1;
         const o = 0.16 * s;
         const k = 0.16;
-        parts.push(line(x1, y1, x2, y2, cls));
-        parts.push(line(
+        parts.push(svgLine(x1, y1, x2, y2, cls));
+        parts.push(svgLine(
           x1 + px * o + dx * k, y1 + py * o + dy * k,
           x2 + px * o - dx * k, y2 + py * o - dy * k, cls));
       } else {
         const o = 0.085;
-        parts.push(line(x1 + px * o, y1 + py * o, x2 + px * o, y2 + py * o, cls));
-        parts.push(line(x1 - px * o, y1 - py * o, x2 - px * o, y2 - py * o, cls));
+        parts.push(svgLine(x1 + px * o, y1 + py * o, x2 + px * o, y2 + py * o, cls));
+        parts.push(svgLine(x1 - px * o, y1 - py * o, x2 - px * o, y2 - py * o, cls));
       }
     } else {
-      parts.push(line(x1, y1, x2, y2, cls));
+      parts.push(svgLine(x1, y1, x2, y2, cls));
     }
   }
 
@@ -417,18 +416,19 @@ function moleculeSVG(code, opts = {}) {
     if (!at.text) continue;
     const cls = (at.side ? 'sc' : 'bb') + ' el-' + at.el;
     parts.push(
-      `<text x="${f(textX(at))}" y="${f(at.y)}" text-anchor="${at.anchor}" ` +
+      `<text x="${fmt(textX(at))}" y="${fmt(at.y)}" text-anchor="${at.anchor}" ` +
       `class="${cls}">${esc(at.text)}</text>`);
   }
 
   const w = maxx - minx, h = maxy - miny;
-  return `<svg class="mol${opts.plain ? ' plain' : ''}" viewBox="${f(minx)} ${f(miny)} ${f(w)} ${f(h)}" ` +
+  const label = opts.label || `Skeletal structure of ${aa(code).name}`;
+  return `<svg class="mol" viewBox="${fmt(minx)} ${fmt(miny)} ${fmt(w)} ${fmt(h)}" ` +
          `preserveAspectRatio="xMidYMid meet" role="img" ` +
-         `aria-label="Skeletal structure of ${esc(aa(code).name)}">${parts.join('')}</svg>`;
+         `aria-label="${esc(label)}">${parts.join('')}</svg>`;
 }
 
-function line(x1, y1, x2, y2, cls) {
-  return `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" class="${cls}"/>`;
+function svgLine(x1, y1, x2, y2, cls) {
+  return `<line x1="${fmt(x1)}" y1="${fmt(y1)}" x2="${fmt(x2)}" y2="${fmt(y2)}" class="${cls}"/>`;
 }
 
-function f(n) { return Math.round(n * 1000) / 1000; }
+function fmt(n) { return Math.round(n * 1000) / 1000; }

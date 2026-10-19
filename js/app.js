@@ -7,9 +7,9 @@ const GAUNTLET_SECONDS = 90;
 
 /* ------------------------------------------------------------ yield
 
-   Every mode and every question variant carries a tier. These are
-   judgement calls about how often the topic actually turns up, not an
-   official AAMC ranking — the slider on the menu sets the ceiling.
+   Every question variant carries a tier. These are judgement calls
+   about how often the topic actually turns up, not an official AAMC
+   ranking — the Gauntlet's setting is the ceiling.
 
    HI  core content that appears on nearly every exam
    MED genuinely tested, but more specific
@@ -19,29 +19,8 @@ const GAUNTLET_SECONDS = 90;
    ------------------------------------------------------------------ */
 const HI = 1, MED = 2, LOW = 3;
 
-/* Every mode is always available and always covers its full content.
-   The yield slider narrows the Gauntlet only — see GENERATORS.gauntlet. */
-const MODES = [
-  { id: 'struct2name', glyph: '⬡', name: 'Structure → Name',
-    desc: 'See a skeletal structure, name the amino acid.' },
-  { id: 'name2struct', glyph: '◈', name: 'Name → Structure',
-    desc: 'Given the name, pick the right side chain out of four.' },
-  { id: 'codes', glyph: 'Aa', name: 'Abbreviations',
-    desc: 'Type the one- and three-letter codes. Fast drilling.' },
-  { id: 'classify', glyph: '▤', name: 'Classify',
-    desc: 'Sort each residue into its side-chain class.' },
-  { id: 'props', glyph: '±', name: 'Properties',
-    desc: 'Charge, pKa, functional groups, biochemistry trivia.' },
-  { id: 'charge', glyph: 'pH', name: 'Charge at pH',
-    desc: 'Net charge at any pH, worked out group by group against each pKa.' },
-  { id: 'isoelectric', glyph: 'pI', name: 'pKa & pI',
-    desc: 'Which two pKa values set the pI, and which way a residue runs on a gel.' },
-  { id: 'gauntlet', glyph: '⏱', name: 'Gauntlet',
-    desc: `Everything at once, ${GAUNTLET_SECONDS} seconds on the clock.` }
-];
-
 /* These describe the Gauntlet only. The other modes always run at full
-   coverage no matter where the slider sits. */
+   coverage no matter what this is set to. */
 const YIELD_LEVELS = [
   { name: 'High yield',
     blurb: 'Only what turns up on nearly every exam: structures, one-letter codes, side-chain classes, charge at physiological pH, and the rule for finding a pI.' },
@@ -51,20 +30,67 @@ const YIELD_LEVELS = [
     blurb: 'Adds the rarely-examined long tail. The other modes always cover everything, whatever this is set to.' }
 ];
 
-/* The slider governs the Gauntlet and nothing else. Outside it this flag
+/* The setting governs the Gauntlet and nothing else. Outside it this flag
    is false, the ceiling opens to LOW, and every standalone mode serves
-   its full range of questions regardless of where the slider sits. */
+   its full range of questions. */
 let yieldActive = false;
 
-/* slider index 0,1,2 -> tier ceiling 1,2,3 */
 function yieldCap() { return yieldActive ? S.yield + 1 : LOW; }
 
 /* Keep only items at or below the ceiling, never returning nothing. */
 function atYield(items) {
-  const cap = yieldCap();
-  const ok = items.filter(i => i.y <= cap);
+  const ok = items.filter(i => i.y <= yieldCap());
   return ok.length ? ok : items;
 }
+
+/* -------------------------------------------------------------- icons
+   20px stroke icons in currentColor, per the Button spec. */
+const ICON = {
+  hexagon: '<path d="M12 2.5 20.5 7.5v9L12 21.5 3.5 16.5v-9z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  type: '<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  sliders: '<path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  flask: '<path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9V3"/>',
+  balance: '<path d="M12 3v18M8 21h8M4 7h16M6 7l-3 7a3 3 0 0 0 6 0L6 7zM18 7l-3 7a3 3 0 0 0 6 0l-3-7z"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
+  book: '<path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>',
+  back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18V3z" fill="currentColor" stroke="none"/>'
+};
+
+function icon(name) {
+  return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +
+    `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+}
+
+const MODES = [
+  { id: 'struct2name', icon: 'hexagon', name: 'Structure → Name',
+    desc: 'See a skeletal structure, name the amino acid.' },
+  { id: 'name2struct', icon: 'search', name: 'Name → Structure',
+    desc: 'Given the name, pick the right side chain out of four.' },
+  { id: 'codes', icon: 'type', name: 'Abbreviations',
+    desc: 'Type the one- and three-letter codes. Fast drilling.' },
+  { id: 'classify', icon: 'grid', name: 'Classify',
+    desc: 'Sort each residue into its side-chain class.' },
+  { id: 'props', icon: 'sliders', name: 'Properties',
+    desc: 'Charge, pKa, functional groups, biochemistry trivia.' },
+  { id: 'charge', icon: 'flask', name: 'Charge at pH',
+    desc: 'Net charge at any pH, worked out group by group against each pKa.' },
+  { id: 'isoelectric', icon: 'balance', name: 'pKa & pI',
+    desc: 'Which two pKa values set the pI, and which way a residue runs on a gel.' },
+  { id: 'gauntlet', icon: 'timer', name: 'Gauntlet',
+    desc: `Everything at once, ${GAUNTLET_SECONDS} seconds on the clock.` }
+];
+
+/* The sky: 'sky' follows the clock, 'light' and 'dark' pin it. */
+const THEMES = [
+  { id: 'sky', icon: 'auto', label: 'Sky follows the clock', next: 'Pin to daytime' },
+  { id: 'light', icon: 'sun', label: 'Pinned to daytime', next: 'Pin to night' },
+  { id: 'dark', icon: 'moon', label: 'Pinned to night', next: 'Let the sky follow the clock' }
+];
 
 /* ---------------------------------------------------------- state */
 
@@ -72,14 +98,17 @@ const S = {
   screen: 'home',
   mode: null,
   form: 'neutral',
+  theme: 'sky',
   yield: 1,
   off: [],
+  filter: 'all',
   q: null,
   answered: false,
   idx: 0,
   score: 0,
   streak: 0,
   best: 0,
+  newBest: false,
   missed: [],
   recent: [],
   timer: null,
@@ -92,27 +121,27 @@ let stats = {};
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const d = JSON.parse(raw);
-      stats = d.stats || {};
-      S.form = d.form || 'neutral';
-      S.best = d.best || 0;
-      if (d.yield === 0 || d.yield === 1 || d.yield === 2) S.yield = d.yield;
-      /* Drop anything unrecognised, and never restore a set so small
-         the games cannot run — a corrupted key should not brick it. */
-      if (Array.isArray(d.off)) {
-        const off = d.off.filter(c => ALL_CODES.includes(c));
-        S.off = (ALL_CODES.length - off.length >= MIN_ACTIVE) ? off : [];
-      }
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    stats = d.stats || {};
+    S.form = d.form === 'ion' ? 'ion' : 'neutral';
+    S.best = d.best || 0;
+    if (THEMES.some(t => t.id === d.theme)) S.theme = d.theme;
+    if (d.yield === 0 || d.yield === 1 || d.yield === 2) S.yield = d.yield;
+    /* Drop anything unrecognised, and never restore a set so small the
+       games cannot run — a corrupted key should not brick it. */
+    if (Array.isArray(d.off)) {
+      const off = d.off.filter(c => ALL_CODES.includes(c));
+      S.off = (ALL_CODES.length - off.length >= MIN_ACTIVE) ? off : [];
     }
-  } catch (e) { /* file:// with storage disabled — run in memory */ }
+  } catch (e) { /* storage unavailable: run in memory */ }
 }
 
 function save() {
   try {
-    localStorage.setItem(STORE_KEY,
-      JSON.stringify({ stats, form: S.form, best: S.best,
-                       yield: S.yield, off: S.off }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      stats, form: S.form, best: S.best, theme: S.theme, yield: S.yield, off: S.off
+    }));
   } catch (e) { /* ignore */ }
 }
 
@@ -137,7 +166,7 @@ function mastery(code) {
 
 /* ------------------------------------------------------- study set
 
-   Clicking a chip on the menu takes that residue out of every game.
+   Clicking a letter on the menu takes that residue out of every game.
    S.off holds the skipped ones. At least MIN_ACTIVE must stay in so the
    generators always have something to work with, and multiple choice
    scales down to however many are left rather than padding the options
@@ -155,7 +184,7 @@ function distractorCount(want = 3) {
 
 function toggleCode(code) {
   if (isActive(code)) {
-    if (activeCodes().length <= MIN_ACTIVE) return false;   // keep enough to play
+    if (activeCodes().length <= MIN_ACTIVE) return false;
     S.off.push(code);
   } else {
     S.off = S.off.filter(c => c !== code);
@@ -189,8 +218,7 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
    often, mastered ones fade into the background. */
 function pickAA(exclude = []) {
   const act = activeCodes();
-  const pool = act.filter(c =>
-    !exclude.includes(c) && !S.recent.includes(c));
+  const pool = act.filter(c => !exclude.includes(c) && !S.recent.includes(c));
   const cands = pool.length ? pool : act.filter(c => !exclude.includes(c));
   if (!cands.length) return act[0];
 
@@ -200,7 +228,6 @@ function pickAA(exclude = []) {
     const acc = s.correct / s.seen;
     return 0.5 + 3 * (1 - acc) + Math.max(0, 4 - s.streak) * 0.45;
   });
-
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
   for (let i = 0; i < cands.length; i++) {
@@ -216,97 +243,87 @@ function noteRecent(code) {
 }
 
 /* Distractors: prefer same-class residues, which is where the real
-   confusion lives, then top up from everything else. */
+   confusion lives, then top up from everything else in play. */
 function distractors(code, n, sameClassBias = 0.65) {
   const a = aa(code);
   const act = activeCodes().filter(c => c !== code);
   const same = act.filter(c => aa(c).cls === a.cls);
   const other = act.filter(c => aa(c).cls !== a.cls);
   const out = [];
-  const wantSame = Math.min(same.length, Math.round(n * sameClassBias));
-  out.push(...sample(same, wantSame));
+  out.push(...sample(same, Math.min(same.length, Math.round(n * sameClassBias))));
   out.push(...sample(other, n - out.length));
-  /* Top up from whatever is left. With a small study set one bucket is
-     often empty, and rounding the bias down can otherwise leave none:
-     n=1 at a 0.4 bias asks for 0 same-class and 1 other-class, which
-     yields nothing at all when every residue in play shares a class. */
-  if (out.length < n) {
-    out.push(...sample(act.filter(c => !out.includes(c)), n - out.length));
-  }
+  if (out.length < n) out.push(...sample(act.filter(c => !out.includes(c)), n - out.length));
   return out.slice(0, n);
 }
 
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+/* Category colour hooks: the colour is always beside the name, never alone. */
+const catStyle = cls => `style="--cat:var(--sd-cat-${CLASSES[cls].cat})"`;
+const badge = code => `<span class="badge" ${catStyle(aa(code).cls)}>${code}</span>`;
+const clsLabel = cls => `<span class="dot" ${catStyle(cls)}></span>${esc(CLASSES[cls].label)}`;
 
 function nameTag(code) {
   const a = aa(code);
   return `<b>${esc(a.name)}</b> <span class="dim">${a.three} · ${a.code}</span>`;
 }
 
-/* ------------------------------------------------- mastery chip card
+/* ------------------------------------------------- letter card
 
-   One shared popup, filled on hover, rather than twenty pre-rendered
+   One shared popover, filled on hover, rather than twenty pre-rendered
    ones — the structure alone would be twenty extra SVGs in the DOM.
    ------------------------------------------------------------------ */
-function chipPopHTML(code) {
-  const a = aa(code), cl = CLASSES[a.cls];
+function letterCardHTML(code) {
+  const a = aa(code);
   const s = stats[code] || { seen: 0, correct: 0 };
   const m = Math.round(mastery(code) * 100);
   const off = !isActive(code);
   return `
-    <div class="cp-head" style="--hue:${cl.hue}">
-      <span class="pill">${a.code}</span>
-      <div class="cp-id">
-        <div class="cp-name">${esc(a.name)}</div>
-        <div class="cp-cls">${a.three} · ${esc(cl.label)}</div>
+    <div class="lc-head">
+      ${badge(code)}
+      <div>
+        <div class="lc-name">${esc(a.name)}</div>
+        <div class="lc-cls">${clsLabel(a.cls)}</div>
       </div>
     </div>
-    <div class="cp-mol">${moleculeSVG(code, { form: S.form, plain: true })}</div>
-    <div class="cp-bar"><span style="width:${m}%"></span></div>
-    <div class="cp-stats">
+    <div class="lc-mol">${moleculeSVG(code, { form: S.form })}</div>
+    <div class="lc-bar"><span style="width:${m}%"></span></div>
+    <div class="lc-stats">
       <span><b>${m}%</b> mastered</span>
       <span>${s.seen ? s.correct + ' of ' + s.seen + ' right' : 'not seen yet'}</span>
     </div>
-    <div class="cp-act${off ? ' is-off' : ''}">${off
+    <div class="lc-act${off ? ' lc-act--off' : ''}">${off
       ? 'Skipped — click to put it back'
       : 'Click to leave it out of the games'}</div>`;
 }
 
-function showChipPop(chip) {
-  const pop = document.getElementById('chipPop');
-  const band = document.querySelector('.progress-band');
-  if (!pop || !band) return;
-  pop.innerHTML = chipPopHTML(chip.dataset.chip);
+function showLetterCard(letter) {
+  const pop = document.getElementById('letterCard');
+  const host = pop && pop.parentElement;
+  if (!pop) return;
+  pop.innerHTML = letterCardHTML(letter.dataset.chip);
   pop.hidden = false;
-
-  /* Position under the chip, clamped so it never hangs off the card. */
-  const br = band.getBoundingClientRect(), cr = chip.getBoundingClientRect();
+  /* under the letter, clamped so it never hangs off the card */
+  const hr = host.getBoundingClientRect(), lr = letter.getBoundingClientRect();
   const w = pop.offsetWidth;
-  const left = Math.max(10, Math.min(
-    cr.left - br.left + cr.width / 2 - w / 2, br.width - w - 10));
+  const left = Math.max(12, Math.min(lr.left - hr.left + lr.width / 2 - w / 2, hr.width - w - 12));
   pop.style.left = left + 'px';
-  pop.style.top = (cr.bottom - br.top + 9) + 'px';
+  pop.style.top = (lr.bottom - hr.top + 8) + 'px';
 }
 
-function hideChipPop() {
-  const pop = document.getElementById('chipPop');
+function hideLetterCard() {
+  const pop = document.getElementById('letterCard');
   if (pop) pop.hidden = true;
 }
 
 /* A short "why" panel shown after every answer. */
 function explainCard(code, extra) {
   const a = aa(code);
-  const cl = CLASSES[a.cls];
   return `
-    <div class="explain" style="--hue:${cl.hue}">
+    <div class="explain">
       <div class="ex-head">
-        <span class="pill">${a.code}</span>
+        ${badge(code)}
         <div>
           <div class="ex-name">${esc(a.name)} <span class="dim">(${a.three})</span></div>
-          <div class="ex-cls">${esc(cl.label)}</div>
+          <div class="ex-cls">${clsLabel(a.cls)}</div>
         </div>
       </div>
       ${extra ? `<div class="ex-extra">${extra}</div>` : ''}
@@ -320,7 +337,11 @@ function explainCard(code, extra) {
     </div>`;
 }
 
-/* -------------------------------------------------- question types */
+/* -------------------------------------------------- question types
+
+   A structure shown AS a question must not announce its name to a
+   screen reader, so quiz drawings carry a neutral label. */
+const QUIET = { label: 'Skeletal structure' };
 
 function qStructToName() {
   const code = pickAA();
@@ -328,7 +349,7 @@ function qStructToName() {
   return {
     kind: 'mc', code, tag: 'Structure',
     prompt: 'Which amino acid is this?',
-    svg: moleculeSVG(code, { form: S.form }),
+    svg: moleculeSVG(code, { form: S.form, ...QUIET }),
     choices: opts.map(c => ({ value: c, html: nameTag(c) })),
     answer: opts.indexOf(code),
     explainWith: 'The side chain is the coloured part — that is the only thing that differs between the twenty.'
@@ -342,7 +363,9 @@ function qNameToStruct() {
   return {
     kind: 'mc-svg', code, tag: 'Structure',
     prompt: `Pick the structure of <b>${esc(a.name)}</b> <span class="dim">(${a.three})</span>`,
-    choices: opts.map(c => ({ value: c, svg: moleculeSVG(c, { form: S.form, plain: true }) })),
+    choices: opts.map((c, i) => ({
+      value: c, svg: moleculeSVG(c, { form: S.form, label: `Option ${i + 1}` })
+    })),
     answer: opts.indexOf(code),
     explainWith: `Look for: ${esc(a.group.toLowerCase())}.`
   };
@@ -351,8 +374,8 @@ function qNameToStruct() {
 /* One-letter codes are the must-know; recalling a full name from a
    letter, or a three-letter code from a drawing, is a step past that. */
 const CODE_VARIANTS = [
-  { y: HI,  id: 'name2one' },
-  { y: HI,  id: 'three2one' },
+  { y: HI, id: 'name2one' },
+  { y: HI, id: 'three2one' },
   { y: MED, id: 'struct2three' },
   { y: MED, id: 'one2name' }
 ];
@@ -364,7 +387,7 @@ function qCodes() {
 
   if (variant === 'name2one') {
     return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 1, wide: false,
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 1,
       prompt: `One-letter code for <b>${esc(a.name)}</b>?`,
       placeholder: '?',
       check: v => v.trim().toUpperCase() === a.code,
@@ -374,7 +397,7 @@ function qCodes() {
   }
   if (variant === 'three2one') {
     return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 1, wide: false,
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 1,
       prompt: `<b>${a.three}</b> — what is the one-letter code?`,
       placeholder: '?',
       check: v => v.trim().toUpperCase() === a.code,
@@ -384,8 +407,8 @@ function qCodes() {
   }
   if (variant === 'struct2three') {
     return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 3, wide: false,
-      svg: moleculeSVG(code, { form: S.form }),
+      kind: 'type', code, tag: 'Abbreviation', maxlen: 3,
+      svg: moleculeSVG(code, { form: S.form, ...QUIET }),
       prompt: 'Three-letter code for this amino acid?',
       placeholder: 'Xxx',
       check: v => v.trim().toLowerCase() === a.three.toLowerCase(),
@@ -396,7 +419,7 @@ function qCodes() {
   return {
     kind: 'type', code, tag: 'Abbreviation', maxlen: 20, wide: true,
     prompt: `Which amino acid is <b>${a.code}</b>?`,
-    placeholder: 'full name',
+    placeholder: 'Full name',
     check: v => nameMatches(v, a),
     answerText: a.name,
     explainWith: 'Three-letter code: <b>' + a.three + '</b>'
@@ -406,16 +429,12 @@ function qCodes() {
 function qClassify() {
   const code = pickAA();
   const a = aa(code);
-  const opts = CLASS_ORDER.slice();
   return {
     kind: 'mc', code, tag: 'Class', columns: 1,
     prompt: `Which class does <b>${esc(a.name)}</b> belong to?`,
-    svg: moleculeSVG(code, { form: S.form }),
-    choices: opts.map(c => ({
-      value: c,
-      html: `<span class="swatch" style="--hue:${CLASSES[c].hue}"></span>${esc(CLASSES[c].label)}`
-    })),
-    answer: opts.indexOf(a.cls),
+    svg: moleculeSVG(code, { form: S.form, ...QUIET }),
+    choices: CLASS_ORDER.map(c => ({ value: c, html: clsLabel(c) })),
+    answer: CLASS_ORDER.indexOf(a.cls),
     explainWith: esc(CLASSES[a.cls].blurb)
   };
 }
@@ -423,13 +442,13 @@ function qClassify() {
 /* -- property questions ------------------------------------------- */
 
 const FACTS = [
-  { y: HI,  q: 'Which amino acid is the only achiral one?', a: 'G' },
-  { y: HI,  q: 'Which amino acid forms disulfide bridges?', a: 'C' },
-  { y: HI,  q: 'Which amino acid is encoded by the start codon AUG?', a: 'M' },
-  { y: HI,  q: 'Which residue kinks α-helices because its side chain locks the backbone?', a: 'P' },
-  { y: HI,  q: 'Which side chain has a pKa near 6, so it buffers at physiological pH?', a: 'H' },
-  { y: HI,  q: 'Which side chain is the strongest base?', a: 'R' },
-  { y: HI,  q: 'Sickle-cell disease swaps which residue at position 6 of β-globin?', a: 'E' },
+  { y: HI, q: 'Which amino acid is the only achiral one?', a: 'G' },
+  { y: HI, q: 'Which amino acid forms disulfide bridges?', a: 'C' },
+  { y: HI, q: 'Which amino acid is encoded by the start codon AUG?', a: 'M' },
+  { y: HI, q: 'Which residue kinks α-helices because its side chain locks the backbone?', a: 'P' },
+  { y: HI, q: 'Which side chain has a pKa near 6, so it buffers at physiological pH?', a: 'H' },
+  { y: HI, q: 'Which side chain is the strongest base?', a: 'R' },
+  { y: HI, q: 'Sickle-cell disease swaps which residue at position 6 of β-globin?', a: 'E' },
   { y: MED, q: 'Which amino acid is the only secondary amine (an "imino acid")?', a: 'P' },
   { y: MED, q: 'Which amino acid contributes most to protein absorbance at 280 nm?', a: 'W' },
   { y: MED, q: 'Which amino acid is the precursor of dopamine, adrenaline and melanin?', a: 'Y' },
@@ -453,22 +472,20 @@ function propCharge() {
       ? `The side-chain pKa is ${a.pKaR.toFixed(2)}, and pH 7 is ${a.pKaR < 7 ? 'above' : 'below'} that, `
         + `so the group is mostly ${a.pKaR < 7 ? 'deprotonated' : 'protonated'}.`
         + (a.code === 'H'
-            ? ' His is the near miss: its pKa of 6.0 is just under pH 7, so the ring is only about'
-              + ' 9% protonated there. It is classed as basic for its chemistry, but at pH 7 it is'
-              + ' predominantly neutral — which is exactly what makes it a physiological buffer.'
-            : '')
+          ? ' His is the near miss: its pKa of 6.0 is just under pH 7, so the ring is only about'
+            + ' 9% protonated there. It is classed as basic for its chemistry, but at pH 7 it is'
+            + ' predominantly neutral — which is exactly what makes it a physiological buffer.'
+          : '')
       : 'This side chain has no ionisable group, so it stays neutral at every physiological pH.')
   };
 }
 
 function propPka() {
   const ion = AAS.filter(x => x.pKaR && isActive(x.code)).map(x => x.code);
-  /* Needs at least two ionisable residues in play to be a real question. */
   if (ion.length < 2) return propCharge();
   const code = pick(ion);
   const a = aa(code);
-  const opts = shuffle([code,
-    ...sample(ion.filter(c => c !== code), distractorCount())]);
+  const opts = shuffle([code, ...sample(ion.filter(c => c !== code), distractorCount())]);
   return {
     kind: 'mc', code, tag: 'pKa',
     prompt: `Which side chain has a pKa of about <b>${a.pKaR.toFixed(1)}</b>?`,
@@ -481,7 +498,6 @@ function propPka() {
 function propGroup() {
   const code = pickAA();
   const a = aa(code);
-  /* Wrong answers are other groups drawn from the study set only. */
   const others = shuffle(AAS.filter(x => isActive(x.code) && x.groupKey !== a.groupKey))
     .filter((x, i, arr) => arr.findIndex(y => y.group === x.group) === i)
     .slice(0, distractorCount()).map(x => x.group);
@@ -499,17 +515,14 @@ function propGroup() {
 function propClassMember() {
   const act = activeCodes();
   const want = distractorCount();
-  /* Only ask about a class that still has a member in play AND enough
-     residues outside it to act as wrong answers. */
+  /* only a class that still has a member in play AND enough outside it */
   const usable = CLASS_ORDER.filter(cl =>
-    act.some(c => aa(c).cls === cl) &&
-    act.filter(c => aa(c).cls !== cl).length >= want);
+    act.some(c => aa(c).cls === cl) && act.filter(c => aa(c).cls !== cl).length >= want);
   if (!usable.length) return propCharge();
 
   const cls = pick(usable);
   const code = pick(act.filter(c => aa(c).cls === cls));
-  const out = sample(act.filter(c => aa(c).cls !== cls), want);
-  const opts = shuffle([code, ...out]);
+  const opts = shuffle([code, ...sample(act.filter(c => aa(c).cls !== cls), want)]);
   return {
     kind: 'mc', code, tag: 'Class',
     prompt: `Which of these is <b>${esc(CLASSES[cls].label.toLowerCase())}</b>?`,
@@ -520,48 +533,40 @@ function propClassMember() {
 }
 
 /* Some residues share a value (Gly and Val are both pI 5.97). Pick the
-   winner first, then draw the other three from strictly the other side,
-   so a "highest / lowest" question can only have one right answer. */
+   winner first, then draw the rest from strictly the other side, so a
+   "highest / lowest" question can only have one right answer. */
 function fourWithUniqueExtreme(key, wantMax) {
   const act = activeCodes();
   const want = distractorCount();
   for (const w of shuffle(act)) {
     const wv = aa(w)[key];
-    const rest = act.filter(c => c !== w &&
-      (wantMax ? aa(c)[key] < wv : aa(c)[key] > wv));
+    const rest = act.filter(c => c !== w && (wantMax ? aa(c)[key] < wv : aa(c)[key] > wv));
     if (rest.length >= want) return shuffle([w, ...sample(rest, want)]);
   }
-  return null;   // every candidate ties; caller falls back
+  return null;
 }
 
-/* No hydropathy question: the Kyte–Doolittle scale is not MCAT content,
-   and its sign disagrees with the polar/nonpolar classification taught
-   in Classify mode for Cys, Trp, Gly and Pro. The values stay on the
-   reference card, where they are context rather than a right answer. */
-
 function propFact() {
-  /* Only ask facts whose answer is still in the study set. */
   const pool = atYield(FACTS).filter(f => isActive(f.a));
   if (!pool.length) return propCharge();
   const f = pick(pool);
-  const code = f.a;
-  const opts = shuffle([code, ...distractors(code, distractorCount(), 0.4)]);
+  const opts = shuffle([f.a, ...distractors(f.a, distractorCount(), 0.4)]);
   return {
-    kind: 'mc', code, tag: 'Biochemistry',
+    kind: 'mc', code: f.a, tag: 'Biochemistry',
     prompt: f.q,
     choices: opts.map(c => ({ value: c, html: nameTag(c) })),
-    answer: opts.indexOf(code),
-    explainWith: esc(aa(code).note)
+    answer: opts.indexOf(f.a),
+    explainWith: esc(aa(f.a).note)
   };
 }
 
-/* propFact twice so trivia keeps roughly its old share of the mode. */
+/* propFact twice so trivia keeps roughly a third of the mode. */
 const PROP_QS = [
-  { y: HI,  gen: propCharge },
-  { y: HI,  gen: propPka },
-  { y: HI,  gen: propClassMember },
-  { y: HI,  gen: propFact },
-  { y: HI,  gen: propFact },
+  { y: HI, gen: propCharge },
+  { y: HI, gen: propPka },
+  { y: HI, gen: propClassMember },
+  { y: HI, gen: propFact },
+  { y: HI, gen: propFact },
   { y: MED, gen: propGroup }
 ];
 
@@ -596,8 +601,7 @@ function ionTable(code, pH) {
   return `<div class="tw"><table class="ion-table">
     <thead><tr><th>Group</th><th class="n">pKa</th><th>At pH ${pH}</th><th class="q">Charge</th></tr></thead>
     <tbody>${rows}</tbody>
-    <tfoot><tr><td colspan="3">Net charge</td>
-      <td class="q ${chgClass(net)}">${chargeStr(net)}</td></tr></tfoot>
+    <tfoot><tr><td colspan="3">Net charge</td><td class="q ${chgClass(net)}">${chargeStr(net)}</td></tr></tfoot>
   </table></div>`;
 }
 
@@ -620,8 +624,7 @@ function piLadder(code) {
 function qChargeAtPH() {
   const code = pickAA();
   const a = aa(code);
-  /* At high yield, stay at physiological pH — that is the version the
-     exam asks. Wider pH ranges are the same skill, one step out. */
+  /* at high yield, stay at physiological pH — the version the exam asks */
   const pH = pickPH(code, yieldCap() === HI ? [7, 7.4] : PH_CHOICES);
   const opts = [-2, -1, 0, 1, 2];
   return {
@@ -638,7 +641,7 @@ const IONISABLE = AAS.filter(x => x.pKaR).map(x => x.code);
 
 function piPair() {
   const ion = IONISABLE.filter(isActive);
-  if (!ion.length) return qChargeAtPH();   // nothing ionisable left in play
+  if (!ion.length) return qChargeAtPH();
   const code = pick(ion);
   const a = aa(code);
   const L = pKaLadder(code);
@@ -668,8 +671,7 @@ function piPair() {
 function piEstimate() {
   const code = pickAA();
   const a = aa(code);
-  /* Distractors must differ from the answer AND from each other —
-     Gly and Val would otherwise both offer 5.97. */
+  /* distractors must differ from the answer AND from each other */
   const want = distractorCount();
   const others = [];
   for (const x of shuffle(AAS.filter(x => isActive(x.code)))) {
@@ -678,7 +680,7 @@ function piEstimate() {
     others.push(x.pI);
     if (others.length === want) break;
   }
-  if (!others.length) return qChargeAtPH();   // no separable pI to contrast
+  if (!others.length) return qChargeAtPH();
   const opts = shuffle([a.pI, ...others]);
   return {
     kind: 'mc', code, tag: 'pI',
@@ -693,7 +695,7 @@ function piEstimate() {
 function piRank() {
   const highest = Math.random() < 0.5;
   const four = fourWithUniqueExtreme('pI', highest);
-  if (!four) return piPair();   // every active residue ties on pI
+  if (!four) return piPair();
   const sorted = four.slice().sort((x, y) => aa(y).pI - aa(x).pI);
   const code = highest ? sorted[0] : sorted[sorted.length - 1];
   return {
@@ -709,14 +711,12 @@ function piRank() {
 function piElectrophoresis() {
   const code = pickAA();
   const a = aa(code);
-  /* Far enough from the pI that the direction is unambiguous, and clear
-     of every pKa so the breakdown table underneath is honest rather
-     than rounding a half-titrated group to a whole charge. */
+  /* far from the pI so the direction is unambiguous, and clear of every
+     pKa so the breakdown underneath is honest */
   const ladder = pKaLadder(code);
   const cands = PH_CHOICES.filter(p => Math.abs(p - a.pI) >= 0.8 &&
     ladder.every(g => Math.abs(p - g.pKa) >= 0.5));
-  const pH = pick(cands.length ? cands
-    : PH_CHOICES.filter(p => Math.abs(p - a.pI) >= 0.8));
+  const pH = pick(cands.length ? cands : PH_CHOICES.filter(p => Math.abs(p - a.pI) >= 0.8));
   const positive = pH < a.pI;
   const opts = [
     { v: 'cathode', html: 'Toward the <b>cathode</b> <span class="dim">(negative electrode)</span>' },
@@ -736,10 +736,9 @@ function piElectrophoresis() {
   };
 }
 
-/* piPair is the actual pI skill, so it survives at every level.
-   Ranking four pIs against each other is the rarest of these. */
+/* piPair is the actual pI skill, so it survives at every level. */
 const PI_QS = [
-  { y: HI,  gen: piPair },
+  { y: HI, gen: piPair },
   { y: MED, gen: piEstimate },
   { y: MED, gen: piElectrophoresis },
   { y: LOW, gen: piRank }
@@ -754,18 +753,17 @@ const GENERATORS = {
   classify: qClassify,
   props: qProps,
   charge: qChargeAtPH,
-  isoelectric: qIsoelectric,
-  /* The only place the yield slider applies. The flag is on just for
-     this call, so the sub-generators narrow themselves the way the
-     slider asks; everywhere else they run unfiltered. */
-  gauntlet: () => {
-    yieldActive = true;
-    try {
-      return pick([qStructToName, qNameToStruct, qCodes,
-                   qClassify, qProps, qChargeAtPH, qIsoelectric])();
-    } finally {
-      yieldActive = false;
-    }
+  isoelectric: qIsoelectric
+};
+
+/* The only place the yield setting applies: the flag is on for just
+   this draw, so the sub-generators narrow themselves. */
+GENERATORS.gauntlet = () => {
+  yieldActive = true;
+  try {
+    return pick(MODES.filter(m => m.id !== 'gauntlet').map(m => GENERATORS[m.id]))();
+  } finally {
+    yieldActive = false;
   }
 };
 
@@ -774,88 +772,91 @@ const GENERATORS = {
 const app = () => document.getElementById('app');
 
 function render() {
-  /* The donation footer belongs on the menu only, not over a quiz. */
+  /* the donation footer belongs on the menu only, not over a quiz */
   const foot = document.querySelector('.sitefoot');
   if (foot) foot.hidden = S.screen !== 'home';
+  hideLetterCard();
 
-  if (S.screen === 'home') return renderHome();
-  if (S.screen === 'quiz') return renderQuiz();
-  if (S.screen === 'results') return renderResults();
-  if (S.screen === 'study') return renderStudy();
+  if (S.screen === 'home') renderHome();
+  else if (S.screen === 'quiz') renderQuiz();
+  else if (S.screen === 'results') renderResults();
+  else if (S.screen === 'study') renderStudy();
+  app().classList.remove('view');
+  void app().offsetWidth;   // restart the cross-fade
+  app().classList.add('view');
 }
 
 function renderHome() {
-  const pct = Math.round(overallMastery() * 100);
   const act = activeCodes();
+  const pct = Math.round(overallMastery() * 100);
   const seen = act.filter(c => stats[c] && stats[c].seen).length;
+  const level = YIELD_LEVELS[S.yield];
 
   app().innerHTML = `
     <section class="hero">
       <h1>Twenty amino acids, committed to memory</h1>
-      <p class="sub">Structures are drawn from real bond geometry. The
-      <span class="sc-word">side chain</span> is highlighted against the shared backbone,
-      because that is the only part that changes.</p>
     </section>
 
-    <section class="progress-band">
-      <div class="pb-row">
-        <div class="pb-num"><strong>${pct}%</strong><span>mastery</span></div>
-        <div class="pb-grid">
-          ${ALL_CODES.map(c => {
-            const m = mastery(c);
-            const a = aa(c);
-            const off = !isActive(c);
-            return `<button class="chip${off ? ' off' : ''}" data-chip="${c}"
-                      style="--hue:${CLASSES[a.cls].hue};--m:${m}"
-                      aria-pressed="${off ? 'false' : 'true'}"
-                      aria-label="${esc(a.name)}, ${off ? 'skipped' : 'in play'}"
-                      >${c}</button>`;
-          }).join('')}
+    <div class="home">
+      <section class="card" aria-labelledby="progressTitle">
+        <p class="lede" id="progressTitle">Structures are drawn from real bond geometry. The
+        <b>side chain</b> is highlighted against the shared backbone, because that is the
+        only part that changes.</p>
+        <div class="progress__row">
+          <div class="stat"><b>${pct}%</b><span>mastered</span></div>
+          <div class="letters" role="group" aria-label="Residues in play">
+            ${ALL_CODES.map(c => {
+              const a = aa(c);
+              const off = !isActive(c);
+              return `<button class="letter${off ? ' letter--off' : ''}" data-chip="${c}"
+                        style="--cat:var(--sd-cat-${CLASSES[a.cls].cat});--m:${mastery(c)}"
+                        aria-pressed="${off ? 'false' : 'true'}"
+                        aria-label="${esc(a.name)}, ${off ? 'skipped' : 'in play'}">${c}</button>`;
+            }).join('')}
+          </div>
+          <div class="stat"><b>${seen}/${act.length}</b><span>encountered</span></div>
         </div>
-        <div class="pb-num"><strong>${seen}/${act.length}</strong><span>encountered</span></div>
-      </div>
-      <div class="pb-foot">
-        <span class="pb-hint">${S.off.length
-          ? `<b>${S.off.length}</b> skipped — <button class="link" id="allOn">study all 20</button>`
-          : 'Click a letter to leave it out of the games'}</span>
-        <button class="link" id="reset">Reset progress</button>
-      </div>
-      <div class="chip-pop" id="chipPop" role="tooltip" hidden></div>
-    </section>
+        <div class="progress__foot">
+          <span>${S.off.length
+            ? `<b>${S.off.length}</b> skipped — <button class="btn btn--text" id="allOn">Study all 20</button>`
+            : 'Click a letter to leave it out of the games'}</span>
+          <button class="btn btn--text" id="reset">Reset progress</button>
+        </div>
+        <div class="popover lettercard" id="letterCard" role="tooltip" hidden></div>
+      </section>
 
-    <section class="modes">
-      ${MODES.map(m => m.id === 'gauntlet' ? `
-        <div class="mode-card has-yield">
-          <button class="mc-go" data-mode="gauntlet">
-            <span class="glyph">${m.glyph}</span>
-            <span class="mc-name">${m.name}</span>
-            <span class="mc-desc">${m.desc}</span>
-          </button>
-          <label class="gy" id="yieldWrap">
-            <span class="ym-label">MCAT yield</span>
-            <input type="range" id="yieldRange" min="0" max="2" step="1"
-                   value="${S.yield}" aria-label="MCAT yield level for the Gauntlet" />
-            <span class="ym-now">${esc(YIELD_LEVELS[S.yield].name)}</span>
-            <span class="ym-pop" role="tooltip">
-              ${YIELD_LEVELS.map((l, i) => `<span class="ymp-row${i === S.yield ? ' on' : ''}"
-                ><b>${esc(l.name)}</b>${esc(l.blurb)}</span>`).join('')}
-            </span>
-          </label>
-        </div>` : `
-        <button class="mode-card" data-mode="${m.id}">
-          <span class="glyph">${m.glyph}</span>
-          <span class="mc-name">${m.name}</span>
-          <span class="mc-desc">${m.desc}</span>
-        </button>`).join('')}
-      <button class="mode-card study" data-mode="study">
-        <span class="glyph">☰</span>
-        <span class="mc-name">Reference table</span>
-        <span class="mc-desc">All twenty side by side, with every property. Study first, then drill.</span>
-      </button>
-    </section>
+      <section class="modes" aria-label="Modes">
+        ${MODES.map(m => m.id === 'gauntlet' ? `
+          <div class="card mode mode--gauntlet">
+            <button class="mode__go" data-mode="gauntlet">
+              <span class="mode__icon">${icon(m.icon)}</span>
+              <span class="mode__name">${m.name}</span>
+              <span class="mode__desc">${m.desc}</span>
+            </button>
+            <div class="mode__yield">
+              <span class="mode__yield-label" id="yieldLabel">MCAT yield for the Gauntlet</span>
+              <div class="seg seg--full" role="radiogroup" aria-labelledby="yieldLabel">
+                ${YIELD_LEVELS.map((l, i) => `
+                  <button class="seg__opt" role="radio" data-y="${i}"
+                          aria-checked="${i === S.yield}">${esc(l.name)}</button>`).join('')}
+              </div>
+              <p class="hint" id="yieldHint">${esc(level.blurb)}</p>
+            </div>
+          </div>` : `
+          <button class="card mode" data-mode="${m.id}">
+            <span class="mode__icon">${icon(m.icon)}</span>
+            <span class="mode__name">${m.name}</span>
+            <span class="mode__desc">${m.desc}</span>
+          </button>`).join('')}
+        <button class="card mode mode--study" data-mode="study">
+          <span class="mode__icon">${icon('book')}</span>
+          <span class="mode__name">Reference table</span>
+          <span class="mode__desc">All twenty side by side, with every property. Study first, then drill.</span>
+        </button>
+      </section>
 
-    ${S.best ? `<p class="footnote">Best gauntlet score: <b>${S.best}</b></p>` : ''}
-  `;
+      ${S.best ? `<p class="footnote">Best Gauntlet score: ${S.best}</p>` : ''}
+    </div>`;
 
   app().querySelectorAll('[data-mode]').forEach(b => {
     b.onclick = () => {
@@ -864,53 +865,85 @@ function renderHome() {
       else startRound(m);
     };
   });
-  /* Patch the label in place rather than re-rendering — a full render
-     would swap out the range element and kill an in-progress drag.
-     The descriptions live in a hover card so the row itself stays quiet. */
-  const range = document.getElementById('yieldRange');
-  if (range) range.oninput = () => {
-    S.yield = +range.value;
-    save();
-    document.querySelector('.ym-now').textContent = YIELD_LEVELS[S.yield].name;
-    app().querySelectorAll('.ymp-row').forEach((row, i) =>
-      row.classList.toggle('on', i === S.yield));
-  };
 
-  /* Chips: hover for the card, click to drop the residue from the games. */
-  app().querySelectorAll('[data-chip]').forEach(chip => {
-    chip.onmouseenter = () => showChipPop(chip);
-    chip.onfocus = () => showChipPop(chip);
-    chip.onmouseleave = hideChipPop;
-    chip.onblur = hideChipPop;
-    chip.onclick = () => {
-      if (!toggleCode(chip.dataset.chip)) {
-        /* At the floor — say so instead of silently ignoring the click. */
-        const pop = document.getElementById('chipPop');
-        if (pop && !pop.hidden) {
-          const act = pop.querySelector('.cp-act');
-          if (act) {
-            act.textContent = `Keep at least ${MIN_ACTIVE} in play`;
-            act.classList.add('is-warn');
-          }
-        }
+  /* yield: a radio group; arrow keys move the selection */
+  const seg = app().querySelector('.mode__yield .seg');
+  const setYield = (i, focus) => {
+    S.yield = i;
+    save();
+    seg.querySelectorAll('.seg__opt').forEach((b, j) => {
+      b.setAttribute('aria-checked', String(j === i));
+      if (focus && j === i) b.focus();
+    });
+    document.getElementById('yieldHint').textContent = YIELD_LEVELS[i].blurb;
+  };
+  seg.querySelectorAll('.seg__opt').forEach(b => {
+    b.onclick = () => setYield(+b.dataset.y, false);
+    b.onkeydown = e => {
+      const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
+              : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+      if (d) { e.preventDefault(); setYield((S.yield + d + 3) % 3, true); }
+    };
+  });
+
+  /* letters: hover for the card, click to drop the residue from the games */
+  app().querySelectorAll('[data-chip]').forEach(letter => {
+    letter.onmouseenter = () => showLetterCard(letter);
+    letter.onfocus = () => showLetterCard(letter);
+    letter.onmouseleave = hideLetterCard;
+    letter.onblur = hideLetterCard;
+    letter.onclick = () => {
+      if (!toggleCode(letter.dataset.chip)) {
+        /* at the floor — say so rather than silently ignoring the click */
+        const act = document.querySelector('#letterCard .lc-act');
+        if (act) { act.textContent = `Keep at least ${MIN_ACTIVE} in play`; act.className = 'lc-act lc-act--warn'; }
         return;
       }
       render();
-      /* Re-open the card on the same chip so the new state is visible. */
-      const again = app().querySelector(`[data-chip="${chip.dataset.chip}"]`);
-      if (again) showChipPop(again);
+      const again = app().querySelector(`[data-chip="${letter.dataset.chip}"]`);
+      if (again) showLetterCard(again);
     };
   });
 
   const allOn = document.getElementById('allOn');
   if (allOn) allOn.onclick = () => { S.off = []; save(); render(); };
 
-  const rst = document.getElementById('reset');
-  if (rst) rst.onclick = () => {
-    if (confirm('Clear all progress and start over?')) {
-      stats = {}; S.best = 0; save(); render();
-    }
+  document.getElementById('reset').onclick = () => confirmDialog({
+    title: 'Reset progress?',
+    body: 'Every residue goes back to unseen and the best Gauntlet score is cleared. The letters you have skipped stay skipped.',
+    confirm: 'Reset',
+    onConfirm: () => { stats = {}; S.best = 0; save(); render(); }
+  });
+}
+
+/* A Sky Diary dialog in place of the browser's confirm(). */
+function confirmDialog({ title, body, confirm, onConfirm }) {
+  const scrim = document.createElement('div');
+  scrim.className = 'scrim';
+  scrim.innerHTML = `
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" tabindex="-1">
+      <div class="dialog__head"><h2 class="dialog__title" id="dlgTitle">${esc(title)}</h2></div>
+      <div class="dialog__body">${esc(body)}</div>
+      <div class="dialog__foot">
+        <button class="btn btn--ghost" data-act="cancel">Cancel</button>
+        <button class="btn btn--danger" data-act="ok">${esc(confirm)}</button>
+      </div>
+    </div>`;
+  const previous = document.activeElement;
+  const close = () => {
+    scrim.remove();
+    document.body.classList.remove('modal-open');
+    document.removeEventListener('keydown', onKey);
+    if (previous && previous.focus) previous.focus();
   };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  scrim.querySelector('[data-act="cancel"]').onclick = close;
+  scrim.querySelector('[data-act="ok"]').onclick = () => { close(); onConfirm(); };
+  scrim.onclick = e => { if (e.target === scrim) close(); };
+  document.addEventListener('keydown', onKey);
+  document.body.classList.add('modal-open');
+  document.body.appendChild(scrim);
+  scrim.querySelector('[data-act="cancel"]').focus();
 }
 
 function startRound(mode) {
@@ -919,6 +952,7 @@ function startRound(mode) {
   S.idx = 0;
   S.score = 0;
   S.streak = 0;
+  S.newBest = false;
   S.missed = [];
   S.recent = [];
   if (mode === 'gauntlet') {
@@ -936,7 +970,7 @@ function tick() {
   if (S.timeLeft <= 0) {
     clearInterval(S.timer);
     S.timer = null;
-    if (S.score > S.best) { S.best = S.score; save(); }
+    if (S.score > S.best) { S.best = S.score; S.newBest = true; save(); }
     S.screen = 'results';
     render();
   }
@@ -952,29 +986,27 @@ function nextQuestion() {
 function renderQuiz() {
   const q = S.q;
   const timed = S.mode === 'gauntlet';
-  const total = timed ? '∞' : ROUND_LEN;
 
   app().innerHTML = `
     <div class="quizbar">
-      <button class="link" id="quit">← Menu</button>
-      <div class="qb-mid">
-        <span class="tag">${q.tag}</span>
-        <span class="dim">${timed ? `Q${S.idx + 1}` : `${S.idx + 1} / ${total}`}</span>
+      <button class="btn btn--secondary" id="quit">${icon('back')} Menu</button>
+      <div class="quizbar__mid">
+        <span class="chip">${esc(q.tag)}</span>
+        <span class="counter">${timed ? `Q${S.idx + 1}` : `${S.idx + 1} of ${ROUND_LEN}`}</span>
       </div>
-      <div class="qb-right">
+      <div class="quizbar__right">
         ${timed ? `<span class="clock" id="clock">${S.timeLeft}s</span>` : ''}
-        <span class="score">${S.score}</span>
-        ${S.streak > 1 ? `<span class="streak">🔥${S.streak}</span>` : ''}
+        <span class="score" aria-label="Score">${S.score}</span>
+        ${S.streak > 1 ? `<span class="streak">${S.streak} in a row</span>` : ''}
       </div>
     </div>
 
-    <div class="card">
+    <section class="card">
       <p class="prompt">${q.prompt}</p>
       ${q.svg ? `<div class="stage">${q.svg}</div>` : ''}
       <div id="answers"></div>
       <div id="feedback"></div>
-    </div>
-  `;
+    </section>`;
 
   document.getElementById('quit').onclick = () => {
     clearInterval(S.timer); S.timer = null;
@@ -986,10 +1018,11 @@ function renderQuiz() {
   if (q.kind === 'type') {
     box.innerHTML = `
       <form class="typebox" id="tf" autocomplete="off">
-        <input id="tin" class="${q.wide ? 'wide' : 'narrow'}"
+        <label class="sr-only" for="tin">Your answer</label>
+        <input id="tin" class="input${q.wide ? '' : ' input--code'}"
                maxlength="${q.maxlen}" placeholder="${esc(q.placeholder)}"
                spellcheck="false" autocapitalize="off" />
-        <button type="submit" class="btn">Check</button>
+        <button type="submit" class="btn btn--primary">Check</button>
       </form>`;
     const input = document.getElementById('tin');
     input.focus();
@@ -1002,19 +1035,16 @@ function renderQuiz() {
       input.oninput = () => { if (input.value.length === 1) submitTyped(input.value); };
     }
   } else if (q.kind === 'mc-svg') {
-    box.innerHTML = `<div class="grid-svg">` + q.choices.map((c, i) =>
-      `<button class="opt-svg" data-i="${i}"><span class="num">${i + 1}</span>${c.svg}</button>`
+    box.innerHTML = `<div class="opts opts--svg">` + q.choices.map((c, i) =>
+      `<button class="opt opt--svg" data-i="${i}"><kbd>${i + 1}</kbd>${c.svg}</button>`
     ).join('') + `</div>`;
-    box.querySelectorAll('button').forEach(b =>
-      b.onclick = () => choose(+b.dataset.i));
   } else {
-    box.innerHTML = `<div class="opts ${q.columns === 1 ? 'one' : ''}">` +
+    box.innerHTML = `<div class="opts${q.columns === 1 ? ' opts--one' : ''}">` +
       q.choices.map((c, i) =>
-        `<button class="opt" data-i="${i}"><span class="num">${i + 1}</span><span class="opt-body">${c.html}</span></button>`
+        `<button class="opt" data-i="${i}"><kbd>${i + 1}</kbd><span class="opt__body">${c.html}</span></button>`
       ).join('') + `</div>`;
-    box.querySelectorAll('button').forEach(b =>
-      b.onclick = () => choose(+b.dataset.i));
   }
+  box.querySelectorAll('button[data-i]').forEach(b => b.onclick = () => choose(+b.dataset.i));
 }
 
 function submitTyped(value) {
@@ -1025,7 +1055,7 @@ function submitTyped(value) {
   finishAnswer(ok, ok ? '' : `You wrote “${esc(value || '—')}”. The answer is <b>${esc(q.answerText)}</b>.`);
   const input = document.getElementById('tin');
   if (input) {
-    input.classList.add(ok ? 'good' : 'bad');
+    input.classList.add(ok ? 'input--good' : 'input--bad');
     input.disabled = true;
   }
 }
@@ -1037,11 +1067,10 @@ function choose(i) {
   const ok = i === q.answer;
   record(q.code, ok);
 
-  const box = document.getElementById('answers');
-  box.querySelectorAll('button').forEach((b, j) => {
+  document.querySelectorAll('#answers button[data-i]').forEach((b, j) => {
     b.disabled = true;
-    if (j === q.answer) b.classList.add('good');
-    else if (j === i) b.classList.add('bad');
+    if (j === q.answer) b.classList.add('opt--good');
+    else if (j === i) b.classList.add('opt--bad');
   });
   finishAnswer(ok, '');
 }
@@ -1050,17 +1079,15 @@ function finishAnswer(ok, extraMsg) {
   if (ok) { S.score++; S.streak++; }
   else { S.streak = 0; S.missed.push(S.q.code); }
 
+  const last = S.mode !== 'gauntlet' && S.idx + 1 >= ROUND_LEN;
   const fb = document.getElementById('feedback');
   fb.innerHTML = `
-    <div class="verdict ${ok ? 'ok' : 'no'}">
+    <div class="verdict ${ok ? 'verdict--ok' : 'verdict--no'}" role="status">
       <span>${ok ? 'Correct' : 'Not quite'}</span>
       ${extraMsg ? `<em>${extraMsg}</em>` : ''}
     </div>
     ${explainCard(S.q.code, S.q.explainWith)}
-    <button class="btn primary wide-btn" id="next">
-      ${(S.mode !== 'gauntlet' && S.idx + 1 >= ROUND_LEN) ? 'See results' : 'Next'}
-      <span class="kbd">↵</span>
-    </button>`;
+    <button class="btn btn--primary btn--full" id="next">${last ? 'See results' : 'Next'} <kbd>↵</kbd></button>`;
   document.getElementById('next').onclick = advance;
   document.getElementById('next').focus();
   fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1083,32 +1110,31 @@ function renderResults() {
   const modeName = (MODES.find(m => m.id === S.mode) || {}).name || '';
 
   app().innerHTML = `
-    <div class="results">
-      <p class="dim">${esc(modeName)}</p>
-      <div class="big-score">${S.score}<span>/ ${asked}</span></div>
-      <div class="ring">${pct}% correct</div>
-      ${S.mode === 'gauntlet' && S.score >= S.best && S.score > 0
-        ? `<p class="best">New best.</p>` : ''}
+    <section class="card results">
+      <p class="results__mode">${esc(modeName)}</p>
+      <div class="bigscore">${S.score}<span>/ ${asked}</span></div>
+      <p class="results__pct">${pct}% correct</p>
+      ${S.newBest ? `<p class="results__best">New best.</p>` : ''}
 
       ${missedUnique.length ? `
         <h3>Worth another look</h3>
         <div class="missed">
           ${missedUnique.map(c => `
-            <div class="missed-card" style="--hue:${CLASSES[aa(c).cls].hue}">
-              <div class="ms-mol">${moleculeSVG(c, { form: S.form, plain: true })}</div>
-              <div class="ms-body">
+            <div class="missed__row">
+              <div class="missed__mol">${moleculeSVG(c, { form: S.form })}</div>
+              <div class="missed__body">
                 <b>${esc(aa(c).name)}</b>
                 <span class="dim">${aa(c).three} · ${aa(c).code}</span>
-                <span class="ms-note">${esc(aa(c).mnemonic)}</span>
+                <span class="missed__note">${esc(aa(c).mnemonic)}</span>
               </div>
             </div>`).join('')}
-        </div>` : `<p class="clean">Clean sweep — nothing missed.</p>`}
+        </div>` : `<p class="results__clean">Clean sweep — nothing missed.</p>`}
 
-      <div class="res-actions">
-        <button class="btn primary" id="again">Go again</button>
-        <button class="btn" id="home">Menu</button>
+      <div class="results__actions">
+        <button class="btn btn--primary" id="again">Go again</button>
+        <button class="btn btn--secondary" id="home">Menu</button>
       </div>
-    </div>`;
+    </section>`;
 
   document.getElementById('again').onclick = () => startRound(S.mode);
   document.getElementById('home').onclick = () => { S.screen = 'home'; render(); };
@@ -1116,52 +1142,43 @@ function renderResults() {
 
 /* ------------------------------------------------------------ study */
 
-let studyFilter = 'all';
-
 function renderStudy() {
-  const list = studyFilter === 'all'
-    ? AAS
-    : AAS.filter(a => a.cls === studyFilter);
+  const list = S.filter === 'all' ? AAS : AAS.filter(a => a.cls === S.filter);
 
   app().innerHTML = `
     <div class="quizbar">
-      <button class="link" id="quit">← Menu</button>
-      <div class="qb-mid"><span class="tag">Reference</span></div>
-      <div class="qb-right">
-        <button class="toggle" id="formtog" title="Switch between the neutral form and the form at pH 7">
-          ${S.form === 'ion' ? 'pH 7 (zwitterion)' : 'Neutral form'}
-        </button>
+      <button class="btn btn--secondary" id="quit">${icon('back')} Menu</button>
+      <div class="quizbar__mid"><span class="chip">Reference</span></div>
+      <div class="seg" role="radiogroup" aria-label="Which form to draw">
+        <button class="seg__opt" role="radio" data-form="neutral" aria-checked="${S.form === 'neutral'}">Neutral</button>
+        <button class="seg__opt" role="radio" data-form="ion" aria-checked="${S.form === 'ion'}">At pH 7</button>
       </div>
     </div>
 
-    <div class="filters">
-      <button class="fbtn ${studyFilter === 'all' ? 'on' : ''}" data-f="all">All 20</button>
+    <div class="filters" role="group" aria-label="Filter by class">
+      <button class="filter" data-f="all" aria-pressed="${S.filter === 'all'}">All 20</button>
       ${CLASS_ORDER.map(c => `
-        <button class="fbtn ${studyFilter === c ? 'on' : ''}" data-f="${c}"
-                style="--hue:${CLASSES[c].hue}">
-          <span class="swatch" style="--hue:${CLASSES[c].hue}"></span>${esc(CLASSES[c].short)}
+        <button class="filter" data-f="${c}" aria-pressed="${S.filter === c}">
+          <span class="dot" ${catStyle(c)}></span>${esc(CLASSES[c].short)}
         </button>`).join('')}
     </div>
 
-    <div class="study-grid">
+    <div class="study">
       ${list.map(a => {
-        const cl = CLASSES[a.cls];
         const m = mastery(a.code);
         return `
-        <article class="aacard" style="--hue:${cl.hue}">
-          <header>
-            <span class="pill">${a.code}</span>
-            <div class="ac-title">
+        <article class="card ref">
+          <header class="ref__head">
+            ${badge(a.code)}
+            <div class="ref__title">
               <h3>${esc(a.name)}</h3>
               <span class="dim">${a.three}${a.alt.length ? ' · ' + esc(a.alt[0]) : ''}</span>
             </div>
-            <span class="mastery" title="${Math.round(m * 100)}% mastered">
-              <span style="width:${m * 100}%"></span>
-            </span>
+            <span class="ref__mastery" role="img" aria-label="${Math.round(m * 100)}% mastered" title="${Math.round(m * 100)}% mastered"><span style="width:${m * 100}%"></span></span>
           </header>
-          <div class="ac-mol">${moleculeSVG(a.code, { form: S.form })}</div>
-          <div class="ac-cls">${esc(cl.label)}</div>
-          <dl class="ac-props">
+          <div class="ref__mol">${moleculeSVG(a.code, { form: S.form })}</div>
+          <div class="ref__cls">${clsLabel(a.cls)}</div>
+          <dl class="ref__props">
             <div><dt>Side chain</dt><dd>${esc(a.group)}</dd></div>
             <div><dt>Charge (pH 7)</dt><dd>${chargeLabel(a)}</dd></div>
             <div><dt>Side-chain pKa</dt><dd>${a.pKaR ? a.pKaR.toFixed(2) : '—'}</dd></div>
@@ -1171,27 +1188,43 @@ function renderStudy() {
             <div><dt>Diet</dt><dd>${essentialLabel(a)}</dd></div>
             <div><dt>Codons</dt><dd class="codons">${a.codons.join(' ')}</dd></div>
           </dl>
-          <p class="ac-mnem">${esc(a.mnemonic)}</p>
-          <p class="ac-note">${esc(a.note)}</p>
+          <p class="ref__mnem">${esc(a.mnemonic)}</p>
+          <p class="ref__note">${esc(a.note)}</p>
         </article>`;
       }).join('')}
     </div>`;
 
   document.getElementById('quit').onclick = () => { S.screen = 'home'; render(); };
-  document.getElementById('formtog').onclick = () => {
-    S.form = S.form === 'ion' ? 'neutral' : 'ion';
-    save(); render();
-  };
+  app().querySelectorAll('[data-form]').forEach(b =>
+    b.onclick = () => { S.form = b.dataset.form; save(); render(); });
   app().querySelectorAll('[data-f]').forEach(b =>
-    b.onclick = () => { studyFilter = b.dataset.f; render(); });
+    b.onclick = () => { S.filter = b.dataset.f; render(); });
+}
+
+/* ------------------------------------------------------- theme pin */
+
+function renderThemePin() {
+  const btn = document.getElementById('themePin');
+  if (!btn) return;
+  const t = THEMES.find(x => x.id === S.theme) || THEMES[0];
+  btn.innerHTML = icon(t.icon);
+  btn.setAttribute('aria-label', `${t.label}. ${t.next}`);
+  btn.dataset.tip = t.label;
+}
+
+function cycleTheme() {
+  const i = THEMES.findIndex(t => t.id === S.theme);
+  S.theme = THEMES[(i + 1) % THEMES.length].id;
+  save();
+  refreshSky();
+  renderThemePin();
 }
 
 /* -------------------------------------------------------- keyboard */
 
 document.addEventListener('keydown', e => {
-  if (S.screen !== 'quiz') return;
-  const typing = document.activeElement &&
-    document.activeElement.tagName === 'INPUT';
+  if (S.screen !== 'quiz' || document.body.classList.contains('modal-open')) return;
+  const typing = document.activeElement && document.activeElement.tagName === 'INPUT';
 
   if (e.key === 'Enter' && S.answered) {
     e.preventDefault();
@@ -1209,5 +1242,13 @@ document.addEventListener('keydown', e => {
 
 /* ------------------------------------------------------------- boot */
 
-load();
-render();
+function boot() {
+  load();
+  buildStars(document.getElementById('stars'), window.innerWidth < 900 ? 16 : 28);
+  startSky(() => S.theme);
+  renderThemePin();
+  document.getElementById('themePin').onclick = cycleTheme;
+  render();
+}
+
+boot();

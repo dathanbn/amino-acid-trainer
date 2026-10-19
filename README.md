@@ -30,9 +30,9 @@ browser's local storage and are never sent anywhere. See
 
 Rounds are 12 questions. Keys `1`–`5` pick an answer, `Enter` advances.
 
-### MCAT yield slider
+### MCAT yield setting
 
-The Gauntlet card carries a three-stop slider that sets how deep *that mode*
+The Gauntlet card carries a three-way control that sets how deep *that mode*
 goes. **It affects the Gauntlet only** — every other mode always covers its
 full range, and nothing is ever greyed out or locked.
 
@@ -42,7 +42,7 @@ full range, and nothing is ever greyed out or locked.
 - **Everything** — adds the rarely-examined long tail.
 
 Measured on the Gauntlet: 122 / 210 / 213 distinct question shapes. The seven
-standalone modes serve an identical 232 shapes at every slider position.
+standalone modes serve an identical 232 shapes at every setting.
 
 ### Choosing what to study
 
@@ -67,14 +67,43 @@ leaves your device, and clearing site data resets it.
 
 ---
 
+## Design
+
+The interface is built on **Sky Diary**, a design system extracted from the
+Em Time focus timer: a sky that follows the real clock, and content that
+floats on glass. Eight clock-keyed keyframes (02:30 through 23:00) are blended
+in OKLab once a minute by [`js/sky.js`](js/sky.js); a sun or moon travels an
+arc, clouds drift by day, stars come out at night, two hills sit at the
+bottom. The whole scene is a fixed, `aria-hidden` layer that never carries
+information and pauses when the tab is hidden or `prefers-reduced-motion` is
+set.
+
+The palette has a **polarity** rather than a light/dark switch: light from
+05:15 to 16:59, dark otherwise, with a 600 ms cross-fade at the flip. The
+sun/moon button in the header pins daytime or night if you prefer, and
+remembers it. A night session is a lit, cosy night sky — not a dimmed office.
+
+Type is **Nunito** (the variable font, weights 500–800), self-hosted so no
+third-party request is made for it. Controls are pills, cards are 28 px
+frosted glass, every control is at least 44 px tall, and focus is a two-tone
+ring (2 px outline plus a 4 px halo) that reads on every sky stop.
+
+`verify.js` composites every surface the app uses over the blended sky at all
+1,440 minutes of the day, in both polarities, and fails if any ink pair drops
+under WCAG 4.5:1 for text or 3:1 for strokes and large type.
+
 ## How the structures work
 
 Nothing is a stored image. Every molecule is generated at render time from
 bond vectors in [`js/chem.js`](js/chem.js): each bond is one unit long, every
 angle is 108°, 120°, 126° or 132°, and rings are built by a fused-polygon
-helper. The shared backbone is drawn in grey and the **side chain in blue**,
-because the side chain is the only part that differs between the twenty — that
-contrast is the point of the drawing.
+helper. The shared backbone is drawn in the secondary ink and the **side chain
+in the accent blue**, because the side chain is the only part that differs
+between the twenty — that contrast is the point of the drawing.
+
+A structure shown *as a question* carries a neutral accessible name
+("Skeletal structure", "Option 2"), so a screen reader never reads out the
+answer.
 
 The reference table toggles between the neutral form (–NH₂ / –COOH) and the
 form at pH 7 (–NH₃⁺ / –COO⁻), since courses differ on which they expect.
@@ -122,7 +151,7 @@ nine essentials spell **PVT TIM HaLL**.
 ## Running and developing
 
 Clone it and open `index.html`. There is no build step, no package manager and
-no dependencies — plain HTML, CSS and three `<script>` tags.
+no dependencies — plain HTML, CSS, one font file and four `<script>` tags.
 
 ```bash
 node serve.js
@@ -138,24 +167,28 @@ node verify.js
 Runs the full correctness suite with no dependencies: molecular formulas
 derived from the drawn bonds, atom valences, bond lengths and angles, label
 collision detection in both pH forms, pI reproduction, 21 hand-worked charge
-cases, and 27,000 generated questions across all three yield levels checked
-for malformed output and out-of-scope content.
+cases, 27,000 generated questions across all three yield levels checked for
+malformed output and out-of-scope content, a check that no quiz drawing
+announces its answer, and the all-day contrast sweep described under Design.
 
 ```bash
 node build.js
 ```
 
 Regenerates `offline/amino-acid-trainer.html` — a single self-contained file
-with the CSS and all three scripts inlined, for studying without a connection.
-Run this after any change to `css/` or `js/`; `verify.js` fails if it is stale.
+with the stylesheet, the font (as a data URI) and all four scripts inlined,
+for studying without a connection. Run this after any change to `css/`,
+`js/` or `fonts/`; `verify.js` fails if it is stale.
 
 ### Files
 
 ```
-index.html      page shell, meta tags
-css/styles.css  styling
+index.html      page shell, the scene markup, meta tags
+css/styles.css  Sky Diary tokens, the scene, components, the app's screens
+fonts/          Nunito Variable, latin subset
 js/data.js      the twenty amino acids, pKa ladder, pI derivation
 js/chem.js      structure builder and SVG renderer
+js/sky.js       the sky engine: keyframes, OKLab blending, sun and moon arcs
 js/app.js       screens, question generation, scoring, yield tiers
 build.js        bundles the offline single-file copy
 verify.js       correctness suite
