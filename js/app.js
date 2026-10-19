@@ -29,6 +29,19 @@ const YIELD_LEVELS = [
   { name: 'Everything',
     blurb: 'Adds the rarely-examined long tail. The other modes always cover everything, whatever this is set to.' }
 ];
+/* The Abbreviations tile chooses which codes it drills. The Gauntlet
+   always draws from the whole list; see qCodes(). */
+const CODE_LEVELS = [
+  { id: 'one', name: 'One-letter',
+    blurb: 'Name or structure to the single letter, and the letter back to the name.' },
+  { id: 'three', name: 'Three-letter',
+    blurb: 'Name or structure to the three-letter code, and the code back to the name.' },
+  { id: 'both', name: 'Both',
+    blurb: 'All of it, plus converting between the two codes. The Gauntlet always drills both.' }
+];
+
+/* the tooltip line for a tile setting: name in bold, then the blurb */
+const levelBlurb = l => `<b>${esc(l.name)}.</b> ${esc(l.blurb)}`;
 
 /* The setting governs the Gauntlet and nothing else. Outside it this flag
    is false, the ceiling opens to LOW, and every standalone mode serves
@@ -100,6 +113,7 @@ const S = {
   form: 'neutral',
   theme: 'sky',
   yield: 1,
+  codes: 'both',
   off: [],
   filter: 'all',
   q: null,
@@ -128,6 +142,7 @@ function load() {
     S.best = d.best || 0;
     if (THEMES.some(t => t.id === d.theme)) S.theme = d.theme;
     if (d.yield === 0 || d.yield === 1 || d.yield === 2) S.yield = d.yield;
+    if (CODE_LEVELS.some(l => l.id === d.codes)) S.codes = d.codes;
     /* Drop anything unrecognised, and never restore a set so small the
        games cannot run — a corrupted key should not brick it. */
     if (Array.isArray(d.off)) {
@@ -140,7 +155,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      stats, form: S.form, best: S.best, theme: S.theme, yield: S.yield, off: S.off
+      stats, form: S.form, best: S.best, theme: S.theme, yield: S.yield, codes: S.codes, off: S.off
     }));
   } catch (e) { /* ignore */ }
 }
@@ -373,57 +388,58 @@ function qNameToStruct() {
 
 /* One-letter codes are the must-know; recalling a full name from a
    letter, or a three-letter code from a drawing, is a step past that. */
+/* Each variant is tagged with the code it needs: 'one', 'three', or
+   'both' for converting between them. Three-letter codes are exam scope,
+   not high yield, so those variants sit at MED. */
 const CODE_VARIANTS = [
-  { y: HI, id: 'name2one' },
-  { y: HI, id: 'three2one' },
-  { y: MED, id: 'struct2three' },
-  { y: MED, id: 'one2name' }
+  { y: HI,  c: 'one',   id: 'name2one' },
+  { y: HI,  c: 'one',   id: 'struct2one' },
+  { y: MED, c: 'one',   id: 'one2name' },
+  { y: MED, c: 'three', id: 'name2three' },
+  { y: MED, c: 'three', id: 'struct2three' },
+  { y: MED, c: 'three', id: 'three2name' },
+  { y: HI,  c: 'both',  id: 'three2one' },
+  { y: MED, c: 'both',  id: 'one2three' }
 ];
 
 function qCodes() {
   const code = pickAA();
   const a = aa(code);
-  const variant = pick(atYield(CODE_VARIANTS)).id;
+  /* The codes setting narrows the standalone mode only. When the yield
+     flag is on this draw belongs to the Gauntlet, which drills every kind. */
+  const pool = yieldActive || S.codes === 'both'
+    ? CODE_VARIANTS : CODE_VARIANTS.filter(v => v.c === S.codes);
+  const v = pick(atYield(pool));
 
-  if (variant === 'name2one') {
-    return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 1,
-      prompt: `One-letter code for <b>${esc(a.name)}</b>?`,
-      placeholder: '?',
-      check: v => v.trim().toUpperCase() === a.code,
-      answerText: a.code,
-      explainWith: 'Three-letter code: <b>' + a.three + '</b>'
-    };
+  const base = { kind: 'type', code, tag: 'Abbreviation', codes: v.c };
+  const struct = () => moleculeSVG(code, { form: S.form, ...QUIET });
+  const one = { maxlen: 1, placeholder: '?',
+    check: x => x.trim().toUpperCase() === a.code, answerText: a.code };
+  const three = { maxlen: 3, placeholder: 'Xxx',
+    check: x => x.trim().toLowerCase() === a.three.toLowerCase(), answerText: a.three };
+  const name = { maxlen: 20, wide: true, placeholder: 'Full name',
+    check: x => nameMatches(x, a), answerText: a.name };
+  const sayThree = 'Three-letter code: <b>' + a.three + '</b>';
+  const sayOne = 'One-letter code: <b>' + a.code + '</b>';
+
+  switch (v.id) {
+    case 'name2one':
+      return { ...base, ...one, prompt: `One-letter code for <b>${esc(a.name)}</b>?`, explainWith: sayThree };
+    case 'struct2one':
+      return { ...base, ...one, svg: struct(), prompt: 'One-letter code for this amino acid?', explainWith: sayThree };
+    case 'one2name':
+      return { ...base, ...name, prompt: `Which amino acid is <b>${a.code}</b>?`, explainWith: sayThree };
+    case 'name2three':
+      return { ...base, ...three, prompt: `Three-letter code for <b>${esc(a.name)}</b>?`, explainWith: sayOne };
+    case 'struct2three':
+      return { ...base, ...three, svg: struct(), prompt: 'Three-letter code for this amino acid?', explainWith: sayOne };
+    case 'three2name':
+      return { ...base, ...name, prompt: `Which amino acid is <b>${a.three}</b>?`, explainWith: sayOne };
+    case 'three2one':
+      return { ...base, ...one, prompt: `<b>${a.three}</b> — what is the one-letter code?`, explainWith: esc(a.name) };
+    default:
+      return { ...base, ...three, prompt: `<b>${a.code}</b> — what is the three-letter code?`, explainWith: esc(a.name) };
   }
-  if (variant === 'three2one') {
-    return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 1,
-      prompt: `<b>${a.three}</b> — what is the one-letter code?`,
-      placeholder: '?',
-      check: v => v.trim().toUpperCase() === a.code,
-      answerText: a.code,
-      explainWith: esc(a.name)
-    };
-  }
-  if (variant === 'struct2three') {
-    return {
-      kind: 'type', code, tag: 'Abbreviation', maxlen: 3,
-      svg: moleculeSVG(code, { form: S.form, ...QUIET }),
-      prompt: 'Three-letter code for this amino acid?',
-      placeholder: 'Xxx',
-      check: v => v.trim().toLowerCase() === a.three.toLowerCase(),
-      answerText: a.three,
-      explainWith: 'One-letter code: <b>' + a.code + '</b>'
-    };
-  }
-  return {
-    kind: 'type', code, tag: 'Abbreviation', maxlen: 20, wide: true,
-    prompt: `Which amino acid is <b>${a.code}</b>?`,
-    placeholder: 'Full name',
-    check: v => nameMatches(v, a),
-    answerText: a.name,
-    explainWith: 'Three-letter code: <b>' + a.three + '</b>'
-  };
 }
 
 function qClassify() {
@@ -786,11 +802,83 @@ function render() {
   app().classList.add('view');
 }
 
+/* ---- tiles that carry a setting (Gauntlet, Abbreviations) ----------
+   The start button on top, a three-way control under a rule. A level's
+   blurb pops up while its pill is hovered or focused (and briefly after
+   a tap) instead of living in the tile. Hidden, the tooltip holds the
+   chosen level's blurb, which is what aria-describedby reads out. */
+const SETTINGS = {
+  yield: {
+    key: 'yield', label: 'MCAT yield for the Gauntlet', levels: YIELD_LEVELS,
+    get: () => S.yield,
+    set: i => { S.yield = i; }
+  },
+  codes: {
+    key: 'codes', label: 'Codes to drill', levels: CODE_LEVELS,
+    get: () => CODE_LEVELS.findIndex(l => l.id === S.codes),
+    set: i => { S.codes = CODE_LEVELS[i].id; }
+  }
+};
+
+function settingTile(m, st) {
+  const cur = st.get();
+  return `
+    <div class="card mode mode--set">
+      <button class="mode__go" data-mode="${m.id}">
+        <span class="mode__icon">${icon(m.icon)}</span>
+        <span class="mode__name">${m.name}</span>
+        <span class="mode__desc">${m.desc}</span>
+      </button>
+      <div class="mode__set" data-set="${st.key}">
+        <span class="mode__set-label" id="${st.key}Label">${st.label}</span>
+        <div class="seg seg--full" role="radiogroup" aria-labelledby="${st.key}Label" aria-describedby="${st.key}Hint">
+          ${st.levels.map((l, i) => `
+            <button class="seg__opt" role="radio" data-opt="${i}" tabindex="${i === cur ? 0 : -1}"
+                    aria-checked="${i === cur}">${esc(l.name)}</button>`).join('')}
+        </div>
+        <div class="popover settip" id="${st.key}Hint" role="tooltip" hidden>${levelBlurb(st.levels[cur])}</div>
+      </div>
+    </div>`;
+}
+
+function wireSetting(root, st) {
+  const seg = root.querySelector('.seg');
+  const tip = root.querySelector('.settip');
+  const n = st.levels.length;
+  let timer = 0;
+  const show = i => { clearTimeout(timer); tip.innerHTML = levelBlurb(st.levels[i]); tip.hidden = false; };
+  const hide = () => { clearTimeout(timer); tip.hidden = true; tip.innerHTML = levelBlurb(st.levels[st.get()]); };
+  const choose = (i, focus) => {
+    st.set(i);
+    save();
+    seg.querySelectorAll('.seg__opt').forEach((b, j) => {
+      b.setAttribute('aria-checked', String(j === i));
+      b.tabIndex = j === i ? 0 : -1;        /* only the chosen pill is in the tab order */
+      if (focus && j === i) b.focus();
+    });
+    show(i);
+    /* nothing to hover away from on a touch screen: let it fade by itself */
+    if (!matchMedia('(hover: hover)').matches) timer = setTimeout(hide, 2800);
+  };
+  seg.querySelectorAll('.seg__opt').forEach(b => {
+    const i = +b.dataset.opt;
+    b.onclick = () => choose(i, false);
+    b.onmouseenter = () => show(i);
+    b.onfocus = () => show(i);
+    b.onkeydown = e => {
+      const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
+              : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+      if (d) { e.preventDefault(); choose((st.get() + d + n) % n, true); }
+    };
+  });
+  seg.onmouseleave = hide;
+  seg.addEventListener('focusout', e => { if (!seg.contains(e.relatedTarget)) hide(); });
+}
+
 function renderHome() {
   const act = activeCodes();
   const pct = Math.round(overallMastery() * 100);
   const seen = act.filter(c => stats[c] && stats[c].seen).length;
-  const level = YIELD_LEVELS[S.yield];
 
   app().innerHTML = `
     <section class="hero">
@@ -826,28 +914,16 @@ function renderHome() {
       </section>
 
       <section class="modes" aria-label="Modes">
-        ${MODES.map(m => m.id === 'gauntlet' ? `
-          <div class="card mode mode--gauntlet">
-            <button class="mode__go" data-mode="gauntlet">
-              <span class="mode__icon">${icon(m.icon)}</span>
-              <span class="mode__name">${m.name}</span>
-              <span class="mode__desc">${m.desc}</span>
-            </button>
-            <div class="mode__yield">
-              <span class="mode__yield-label" id="yieldLabel">MCAT yield for the Gauntlet</span>
-              <div class="seg seg--full" role="radiogroup" aria-labelledby="yieldLabel">
-                ${YIELD_LEVELS.map((l, i) => `
-                  <button class="seg__opt" role="radio" data-y="${i}"
-                          aria-checked="${i === S.yield}">${esc(l.name)}</button>`).join('')}
-              </div>
-              <p class="hint" id="yieldHint">${esc(level.blurb)}</p>
-            </div>
-          </div>` : `
+        ${MODES.map(m => {
+          if (m.id === 'gauntlet') return settingTile(m, SETTINGS.yield);
+          if (m.id === 'codes') return settingTile(m, SETTINGS.codes);
+          return `
           <button class="card mode" data-mode="${m.id}">
             <span class="mode__icon">${icon(m.icon)}</span>
             <span class="mode__name">${m.name}</span>
             <span class="mode__desc">${m.desc}</span>
-          </button>`).join('')}
+          </button>`;
+        }).join('')}
         <button class="card mode mode--study" data-mode="study">
           <span class="mode__icon">${icon('book')}</span>
           <span class="mode__name">Reference table</span>
@@ -866,25 +942,8 @@ function renderHome() {
     };
   });
 
-  /* yield: a radio group; arrow keys move the selection */
-  const seg = app().querySelector('.mode__yield .seg');
-  const setYield = (i, focus) => {
-    S.yield = i;
-    save();
-    seg.querySelectorAll('.seg__opt').forEach((b, j) => {
-      b.setAttribute('aria-checked', String(j === i));
-      if (focus && j === i) b.focus();
-    });
-    document.getElementById('yieldHint').textContent = YIELD_LEVELS[i].blurb;
-  };
-  seg.querySelectorAll('.seg__opt').forEach(b => {
-    b.onclick = () => setYield(+b.dataset.y, false);
-    b.onkeydown = e => {
-      const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
-              : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
-      if (d) { e.preventDefault(); setYield((S.yield + d + 3) % 3, true); }
-    };
-  });
+  wireSetting(app().querySelector('[data-set="yield"]'), SETTINGS.yield);
+  wireSetting(app().querySelector('[data-set="codes"]'), SETTINGS.codes);
 
   /* letters: hover for the card, click to drop the residue from the games */
   app().querySelectorAll('[data-chip]').forEach(letter => {

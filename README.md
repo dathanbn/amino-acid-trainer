@@ -20,7 +20,7 @@ browser's local storage and are never sent anywhere. See
 |---|---|
 | Structure → Name | Read a skeletal structure, name the residue |
 | Name → Structure | Pick the right side chain out of four |
-| Abbreviations | Type the one- and three-letter codes |
+| Abbreviations | Type the one- and three-letter codes — either one, or both |
 | Classify | Sort each residue into its side-chain class |
 | Properties | Charge at pH 7, pKa, functional groups, biochemistry |
 | Charge at pH | Net charge at any pH, with the working shown group by group |
@@ -41,8 +41,15 @@ full range, and nothing is ever greyed out or locked.
 - **Exam scope** *(default)* — everything the AAMC actually tests.
 - **Everything** — adds the rarely-examined long tail.
 
-Measured on the Gauntlet: 122 / 210 / 213 distinct question shapes. The seven
-standalone modes serve an identical 232 shapes at every setting.
+Measured on the Gauntlet: 123 / 251 / 254 distinct question shapes. The seven
+standalone modes serve an identical 293 shapes at every setting.
+
+### Which codes to drill
+
+The Abbreviations card has its own three-way control: **One-letter**,
+**Three-letter**, or **Both** (the default, which also includes converting
+between the two). Like the yield setting, it is scoped to its own mode — the
+Gauntlet always drills every kind.
 
 ### Choosing what to study
 
@@ -168,8 +175,9 @@ Runs the full correctness suite with no dependencies: molecular formulas
 derived from the drawn bonds, atom valences, bond lengths and angles, label
 collision detection in both pH forms, pI reproduction, 21 hand-worked charge
 cases, 27,000 generated questions across all three yield levels checked for
-malformed output and out-of-scope content, a check that no quiz drawing
-announces its answer, and the all-day contrast sweep described under Design.
+malformed output and out-of-scope content, a check that each tile setting
+narrows only its own mode, a check that no quiz drawing announces its
+answer, and the all-day contrast sweep described under Design.
 
 ```bash
 node build.js

@@ -283,6 +283,36 @@ const [g0, g1, g2] = scope.gauntlet;
 (g0 < g1 && g1 <= g2) ? pass('Gauntlet does respond to the setting: ' + g0 + ' / ' + g1 + ' / ' + g2 + ' question shapes')
                       : fail('Gauntlet is not narrowing as expected: ' + scope.gauntlet.join(' / '));
 
+/* ------------------------ codes setting (Abbreviations only) */
+
+head('Codes setting scope');
+
+const codesScope = run(`(function(){
+  const before = S.codes;
+  const kinds = (mode, setting) => {
+    S.codes = setting;
+    const s = new Set();
+    for (let i = 0; i < 4000; i++) {
+      const q = GENERATORS[mode]();
+      if (q.tag === 'Abbreviation') s.add(q.codes);
+    }
+    return [...s].sort().join(',');
+  };
+  const out = {};
+  for (const l of CODE_LEVELS) out[l.id] = { codes: kinds('codes', l.id), gauntlet: kinds('gauntlet', l.id) };
+  S.codes = before;
+  return out;
+})()`);
+for (const l of ['one', 'three']) {
+  codesScope[l].codes === l ? pass('Abbreviations at "' + l + '" asks only ' + l + '-letter questions')
+                            : fail('Abbreviations at "' + l + '" served: ' + codesScope[l].codes);
+}
+codesScope.both.codes === 'both,one,three' ? pass('Abbreviations at "both" mixes all three kinds')
+                                            : fail('Abbreviations at "both" served: ' + codesScope.both.codes);
+Object.values(codesScope).every(v => v.gauntlet === 'both,one,three')
+  ? pass('the Gauntlet ignores the setting and drills every kind')
+  : fail('Gauntlet drifts with the codes setting: ' + JSON.stringify(codesScope));
+
 /* ------------------------------------------ study-set subsets */
 
 head('Study set (letters switched off)');

@@ -160,7 +160,6 @@
   /* the molecule: backbone in secondary ink, side chain in the accent */
   --mol-backbone: var(--sd-ink-2);
   --mol-side: var(--sd-accent-text);
-  --mol-halo: #ffffff;
 }
 
 @media (min-width: 900px) {
@@ -230,7 +229,6 @@
   --sd-shadow-md: 0 8px 28px rgba(0, 0, 0, 0.38);
   --sd-shadow-lg: 0 18px 52px rgba(0, 0, 0, 0.48);
 
-  --mol-halo: #121b2b;
 }
 
 /* No backdrop-filter: glass and cards go more opaque so the same ink still passes. */
@@ -277,7 +275,6 @@
     --sky-ink: CanvasText;
     --mol-backbone: CanvasText;
     --mol-side: Highlight;
-    --mol-halo: Canvas;
   }
   .scene { display: none; }
 }
@@ -934,11 +931,11 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
 .mode--study .mode__icon { background: var(--sd-surface-sunk); color: var(--sd-ink-2); }
 @media (min-width: 900px) { .mode { padding: 24px; } }
 
-/* The Gauntlet tile is a container: the start button on top, the yield
-   setting below a rule. Only the start area lifts. */
-.mode--gauntlet { padding: 0; gap: 0; }
-.mode--gauntlet:hover { transform: none; box-shadow: var(--sd-shadow-md); }
-.mode--gauntlet:has(.mode__go:hover) { transform: translateY(-2px); box-shadow: var(--sd-shadow-lg); }
+/* A tile that carries a setting (Gauntlet, Abbreviations): the start
+   button on top, the control below a rule. Only the start area lifts. */
+.mode--set { padding: 0; gap: 0; }
+.mode--set:hover { transform: none; box-shadow: var(--sd-shadow-md); }
+.mode--set:has(.mode__go:hover) { transform: translateY(-2px); box-shadow: var(--sd-shadow-lg); }
 .mode__go {
   display: flex;
   flex-direction: column;
@@ -950,23 +947,39 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
   color: inherit;
   border-radius: var(--sd-radius-lg) var(--sd-radius-lg) 0 0;
 }
-.mode__yield {
+.mode__set {
+  position: relative;
   display: grid;
   gap: 8px;
   padding: 12px 18px 16px;
   border-top: 1px solid var(--sd-border);
 }
-.mode__yield-label {
+/* the level's blurb, popped up above the control while a pill is hovered
+   or focused; it stays inside the tile, so no sibling can paint over it */
+.settip {
+  left: 18px;
+  right: 18px;
+  bottom: calc(100% + 4px);
+  padding: 10px 12px;
+  font-size: var(--sd-fs-xs);
+  line-height: 18px;
+  color: var(--sd-ink-2);
+  animation: view-in var(--sd-dur-fast) var(--sd-ease-standard);
+}
+.settip[hidden] { display: none; }
+.settip b { color: var(--sd-ink); font-weight: var(--sd-fw-heavy); }
+.mode__set-label {
   font-size: var(--sd-fs-xs);
   font-weight: var(--sd-fw-semibold);
   color: var(--sd-ink-2);
 }
 /* three pills in a single-width tile: small type, tight padding */
-.mode__yield .seg { padding: 3px; }
-.mode__yield .seg__opt { min-width: 0; min-height: 36px; padding: 0 6px; font-size: var(--sd-fs-xs); }
+.mode__set .seg { padding: 3px; }
+.mode__set .seg__opt { min-width: 0; min-height: 36px; padding: 0 6px; font-size: var(--sd-fs-xs); }
 @media (min-width: 900px) {
   .mode__go { padding: 24px; }
-  .mode__yield { padding: 12px 24px 18px; }
+  .mode__set { padding: 12px 24px 18px; }
+  .settip { left: 24px; right: 24px; }
 }
 
 .footnote { color: var(--sky-ink); text-shadow: 0 1px 10px var(--sky-ink-shadow); font-weight: var(--sd-fw-semibold); font-size: var(--sd-fs-md); }
@@ -1036,10 +1049,6 @@ svg.mol text {
   font-family: var(--sd-font-sans);
   font-weight: var(--sd-fw-semibold);
   dominant-baseline: central;
-  paint-order: stroke;
-  stroke: var(--mol-halo);
-  stroke-width: 0.16px;
-  stroke-linejoin: round;
   transition: fill var(--sd-dur-flip) ease;
 }
 svg.mol text.bb { fill: var(--mol-backbone); }
