@@ -435,15 +435,15 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
 
 .scene__cloud {
   position: absolute;
-  width: 132px; height: 52px;
+  width: 132px; height: 56px;
   fill: var(--sky-cloud-fill);
   opacity: var(--sky-cloud-opacity);
   transition: opacity var(--sd-dur-flip) ease;
   animation: drift linear infinite;
 }
 .scene__cloud--1 { top: 12%; animation-duration: 210s; }
-.scene__cloud--2 { top: 24%; width: 164px; height: 64px; animation-duration: 250s; animation-delay: -90s; }
-.scene__cloud--3 { top: 36%; width: 108px; height: 42px; animation-duration: 160s; animation-delay: -40s; }
+.scene__cloud--2 { top: 24%; width: 164px; height: 70px; animation-duration: 250s; animation-delay: -90s; }
+.scene__cloud--3 { top: 36%; width: 108px; height: 46px; animation-duration: 160s; animation-delay: -40s; }
 @keyframes drift {
   from { transform: translateX(-20vw); }
   to { transform: translateX(120vw); }
@@ -779,6 +779,9 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
 
 /* ---- the stack of home-screen cards ---- */
 .home { display: grid; gap: var(--sd-space-4); }
+/* The letter popover hangs below this card, over the mode tiles that
+   follow it, so the card must sit above its later siblings. */
+.progress { position: relative; z-index: 2; }
 
 .lede { color: var(--sd-ink-2); }
 .lede b { color: var(--mol-side); font-weight: var(--sd-fw-heavy); }
@@ -892,16 +895,13 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
 }
 
 /* ---- modes ---- */
+/* Every tile is the same size, in source order. The 300px floor is what the
+   Gauntlet's three-way control needs at the narrowest three-column tile. */
 .modes {
   display: grid;
   gap: var(--sd-space-4);
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  grid-auto-flow: dense;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
-/* The Gauntlet is the capstone mode and carries a setting, so it gets a
-   double-width tile wherever there are two or more columns; that is also
-   what keeps its three-way control from overflowing. */
-@media (min-width: 560px) { .mode--gauntlet { grid-column: span 2; } }
 .mode {
   text-align: left;
   display: flex;
@@ -961,8 +961,9 @@ html[data-hidden] .scene * { animation-play-state: paused !important; }
   font-weight: var(--sd-fw-semibold);
   color: var(--sd-ink-2);
 }
-/* on a phone the tile is single-column; tighten the pills so all three fit */
-@media (max-width: 559px) { .mode__yield .seg__opt { padding: 0 8px; font-size: var(--sd-fs-xs); } }
+/* three pills in a single-width tile: small type, tight padding */
+.mode__yield .seg { padding: 3px; }
+.mode__yield .seg__opt { min-width: 0; min-height: 36px; padding: 0 6px; font-size: var(--sd-fs-xs); }
 @media (min-width: 900px) {
   .mode__go { padding: 24px; }
   .mode__yield { padding: 12px 24px 18px; }
@@ -1282,8 +1283,20 @@ svg.mol text.sc { fill: var(--mol-side); }
   font-weight: var(--sd-fw-semibold);
 }
 .sitefoot[hidden] { display: none; }
-.sitefoot .btn { text-shadow: none; }
-.sitefoot__venmo { font-size: var(--sd-fs-sm); }
+/* a quiet text link, not a button: underline at half strength until hovered */
+.sitefoot__coffee {
+  color: inherit;
+  font-size: var(--sd-fs-sm);
+  font-weight: var(--sd-fw-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 3px;
+  transition: text-decoration-color var(--sd-dur-fast) var(--sd-ease-standard);
+}
+.sitefoot__coffee:hover { text-decoration-color: currentColor; }
+.sitefoot__venmo { font-size: var(--sd-fs-xs); }
 
 /* ---- phones ---- */
 @media (max-width: 560px) {

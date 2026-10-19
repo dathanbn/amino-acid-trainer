@@ -798,7 +798,7 @@ function renderHome() {
     </section>
 
     <div class="home">
-      <section class="card" aria-labelledby="progressTitle">
+      <section class="card progress" aria-labelledby="progressTitle">
         <p class="lede" id="progressTitle">Structures are drawn from real bond geometry. The
         <b>side chain</b> is highlighted against the shared backbone, because that is the
         only part that changes.</p>
